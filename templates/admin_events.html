@@ -1,0 +1,51 @@
+{% extends "admin_base.html" %}
+{% block title %}イベント管理 - JAN Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+  <h2 class="mb-0">イベント管理</h2>
+  <a href="{{ url_for('admin_event_new') }}" class="btn btn-primary btn-sm">新規イベント</a>
+</div>
+
+<div class="card p-3">
+  <table class="table table-dark table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>イベント名</th>
+        <th>日付</th>
+        <th>公開</th>
+        <th>パスワード</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in events %}
+        <tr>
+          <td>{{ e.id }}</td>
+          <td>{{ e.name }}</td>
+          <td>{% if e.date %}{{ e.date.strftime("%Y-%m-%d") }}{% endif %}</td>
+          <td>{{ '公開' if e.is_public else '非公開' }}</td>
+          <td>
+            {% if e.gallery_password %}
+              ****
+            {% else %}
+              <span class="text-secondary">なし</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{{ url_for('admin_event_edit', event_id=e.id) }}" class="btn btn-sm btn-outline-light">編集</a>
+            <a href="{{ url_for('admin_event_toggle', event_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
+              {{ '非公開にする' if e.is_public else '公開にする' }}
+            </a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-secondary">まだイベントがありません。</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

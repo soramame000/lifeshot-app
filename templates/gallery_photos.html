@@ -1,0 +1,117 @@
+{% extends "public_base.html" %}
+{% block title %}{{ event.name }} - ギャラリー{% endblock %}
+
+{% block content %}
+<h2 class="mb-2">{{ event.name }} の写真</h2>
+{% if event.date %}
+  <p class="text-secondary mb-3">{{ event.date.strftime("%Y-%m-%d") }}</p>
+{% endif %}
+
+{% if photos %}
+  <div class="row">
+    <div class="col-lg-8 mb-3">
+      <div class="card p-2 text-center">
+        <div id="viewer-container" style="max-height:70vh; overflow:hidden;">
+          <img id="viewer-image" src="{{ photos[0].image_url }}" alt="{{ photos[0].photo_code }}"
+               class="img-fluid rounded">
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <button class="btn btn-sm btn-outline-light" id="prev-btn">← 前の写真</button>
+          <div class="small text-secondary">
+            <span id="viewer-index">1</span> / {{ photos|length }}　
+            <span id="viewer-code">{{ photos[0].photo_code }}</span>
+          </div>
+          <button class="btn btn-sm btn-outline-light" id="next-btn">次の写真 →</button>
+        </div>
+        <div class="mt-2">
+          <a id="viewer-order-link"
+             href="{{ url_for('gallery_order', photo_id=photos[0].id) }}"
+             class="btn btn-primary btn-sm">
+            この写真を注文する
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <p class="small text-secondary">サムネイルをクリックすると大きく表示されます。</p>
+      <div class="row g-2" style="max-height:70vh; overflow-y:auto;">
+        {% for p in photos %}
+          <div class="col-4">
+            <img src="{{ p.image_url }}" alt="{{ p.photo_code }}"
+                 class="img-fluid rounded thumb-image"
+                 data-index="{{ loop.index0 }}">
+            <div class="small text-secondary text-center">{{ p.photo_code }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-secondary">このイベントにはまだ公開された写真がありません。</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if photos %}
+<script>
+  const photos = [
+    {% for p in photos %}
+    {
+      id: {{ p.id }},
+      url: "{{ p.image_url }}",
+      code: "{{ p.photo_code | replace('"','\\"') }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  let currentIndex = 0;
+
+  function updateViewer() {
+    const photo = photos[currentIndex];
+    const img = document.getElementById("viewer-image");
+    const idx = document.getElementById("viewer-index");
+    const code = document.getElementById("viewer-code");
+    const link = document.getElementById("viewer-order-link");
+
+    img.src = photo.url;
+    img.alt = photo.code;
+    idx.textContent = (currentIndex + 1).toString();
+    code.textContent = photo.code;
+    link.href = "{{ url_for('gallery_order', photo_id=0) }}".replace("0", photo.id);
+  }
+
+  document.getElementById("prev-btn").addEventListener("click", function() {
+    if (currentIndex > 0) {
+      currentIndex -= 1;
+      updateViewer();
+    }
+  });
+
+  document.getElementById("next-btn").addEventListener("click", function() {
+    if (currentIndex < photos.length - 1) {
+      currentIndex += 1;
+      updateViewer();
+    }
+  });
+
+  document.querySelectorAll(".thumb-image").forEach(function(el) {
+    el.addEventListener("click", function() {
+      const idx = parseInt(el.getAttribute("data-index"));
+      if (!isNaN(idx)) {
+        currentIndex = idx;
+        updateViewer();
+      }
+    });
+  });
+
+  // キーボード左右でも操作
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "ArrowLeft") {
+      if (currentIndex > 0) { currentIndex -= 1; updateViewer(); }
+    } else if (e.key === "ArrowRight") {
+      if (currentIndex < photos.length - 1) { currentIndex += 1; updateViewer(); }
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

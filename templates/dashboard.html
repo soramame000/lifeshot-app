@@ -1,0 +1,114 @@
+{% extends "admin_base.html" %}
+{% block title %}ダッシュボード - JAN Admin{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<h2 class="mt-2 mb-3">ダッシュボード</h2>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card p-3">
+      <div class="text-secondary small">今日の売上</div>
+      <div class="h4 mt-1">{{ today_sales }} 円</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <div class="text-secondary small">累計売上</div>
+      <div class="h4 mt-1">{{ total_sales }} 円</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <div class="text-secondary small">累計注文数</div>
+      <div class="h4 mt-1">{{ total_count }} 件</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3">
+      <div class="text-secondary small">未入金注文</div>
+      <div class="h4 mt-1">{{ unpaid_count }} 件</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card p-3">
+      <h5 class="mb-2">売上推移（最近）</h5>
+      <canvas id="salesChart" height="120"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3 mb-3">
+      <h6 class="mb-2">最近の注文</h6>
+      <div class="small" style="max-height:220px; overflow:auto;">
+        {% for o in recent_orders %}
+          <div class="mb-2">
+            <a href="{{ url_for('admin_order_detail', order_id=o.id) }}" class="text-info">
+              #{{ o.id }} {{ o.customer_name }}
+            </a>
+            <div class="text-secondary">
+              {{ o.event_name or '-' }} / {{ o.photo_code or '' }}<br>
+              {{ o.total_amount }}円 / {{ o.payment_status }}
+            </div>
+          </div>
+        {% else %}
+          <div class="text-secondary">まだ注文はありません。</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card p-3">
+      <h6 class="mb-2">最近のギャラリーアクセス</h6>
+      <div class="small" style="max-height:180px; overflow:auto;">
+        {% for a in recent_access %}
+          <div class="mb-2">
+            {{ a.event_name }}<br>
+            <span class="text-info">{{ a.customer_name }}</span>
+            <span class="text-secondary">({{ a.contact }})</span><br>
+            <span class="text-secondary">
+              {{ a.accessed_at.strftime("%Y-%m-%d %H:%M") }}
+            </span>
+          </div>
+        {% else %}
+          <div class="text-secondary">まだアクセス履歴はありません。</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const labels = {{ chart_labels|tojson }};
+  const values = {{ chart_values|tojson }};
+
+  const ctx = document.getElementById('salesChart');
+  if (ctx && labels.length > 0) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '売上（円）',
+          data: values,
+          tension: 0.3
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { ticks: { color: '#9ca3af' } },
+          y: { ticks: { color: '#9ca3af' } }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

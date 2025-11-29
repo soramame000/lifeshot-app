@@ -1,0 +1,43 @@
+{% extends "public_base.html" %}
+{% block title %}PayPayで支払う | LifeShot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card p-4">
+      <h1 class="h4 fw-bold mb-3">PayPayで決済</h1>
+      <p class="text-secondary">
+        下記のQRコードをPayPayアプリで読み取るか、スマートフォンでアクセスして支払いを完了してください。
+      </p>
+
+      <div class="d-flex flex-column flex-md-row gap-4 align-items-start">
+        {% if paypay_data.qrCode %}
+          <img src="data:image/png;base64,{{ paypay_data.qrCode }}" alt="PayPay QR" class="border rounded" style="max-width: 280px;">
+        {% endif %}
+        <div class="flex-fill">
+          <p class="mb-1">
+            注文番号: <strong>#{{ order.id }}</strong><br>
+            金額: <strong>{{ order.total_amount }}円</strong>
+          </p>
+          <a href="{{ paypay_data.url or paypay_data.linkUrl }}" class="btn btn-primary mb-2" target="_blank" rel="noopener">
+            PayPayアプリを開いて支払う
+          </a>
+          {% if paypay_data.deepLink %}
+            <p class="small text-secondary mb-2">アプリで開けない場合: {{ paypay_data.deepLink }}</p>
+          {% endif %}
+          <p class="small text-secondary">
+            決済完了後、自動でステータスが更新されます。しばらく時間がかかる場合があります。
+          </p>
+        </div>
+      </div>
+
+      <hr class="border-secondary my-4">
+      <p class="small text-secondary mb-0">
+        問題が発生した場合は {{ order.customer_contact }} までご連絡ください。<br>
+        この注文ページ: <a href="{{ url_for('checkout_order', order_id=order.id) }}">{{ url_for('checkout_order', order_id=order.id, _external=True) }}</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,19 @@
+{% extends "public_base.html" %}
+{% block title %}管理者ログイン - JAN Photo Studio{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card p-4 mt-4">
+      <h3 class="mb-3">管理者ログイン</h3>
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">パスワード</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <button class="btn btn-primary w-100">ログイン</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

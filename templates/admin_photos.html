@@ -1,0 +1,50 @@
+{% extends "admin_base.html" %}
+{% block title %}写真管理 - JAN Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+  <h2 class="mb-0">写真管理</h2>
+  <a href="{{ url_for('admin_photos_bulk') }}" class="btn btn-primary btn-sm">一括登録</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <form class="row g-2" method="get">
+    <div class="col-md-4">
+      <label class="form-label mb-1">イベント</label>
+      <select name="event_id" class="form-select form-select-sm">
+        <option value="">すべて</option>
+        {% for e in events %}
+          <option value="{{ e.id }}" {% if selected_event_id and selected_event_id|int == e.id %}selected{% endif %}>
+            {{ e.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+      <button class="btn btn-secondary btn-sm me-2">絞り込み</button>
+      <a href="{{ url_for('admin_photos') }}" class="btn btn-outline-light btn-sm">リセット</a>
+    </div>
+  </form>
+</div>
+
+<div class="card p-3">
+  <div class="row g-2">
+    {% for p in photos %}
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="border border-secondary rounded p-1 h-100">
+          <img src="{{ p.image_url }}" alt="{{ p.photo_code }}" class="img-fluid rounded mb-1">
+          <div class="small text-secondary">
+            ID: {{ p.id }}<br>
+            {{ p.event.name if p.event else '-' }}<br>
+            No. {{ p.photo_code }}
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="col-12 text-secondary">
+        写真がありません。まずは一括登録してください。
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

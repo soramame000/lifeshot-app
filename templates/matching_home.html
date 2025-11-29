@@ -1,0 +1,86 @@
+{% extends "public_base.html" %}
+{% block title %}LifeShot Matching{% endblock %}
+
+{% block content %}
+<section class="hero rounded-4 mb-4 text-center text-md-start">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <p class="text-uppercase text-info small fw-semibold mb-2">LifeShot / マッチングMVP</p>
+      <h1 class="display-5 fw-bold mb-3">「人生アーカイブで世界を撮る」</h1>
+      <p class="lead mb-4">
+        撮って欲しい瞬間と、撮ることを仕事にしたい人をつなげる。<br>
+        ここで生まれた撮影データが、未来の人生アーカイブの最初のピースになる。
+      </p>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('matching_request') }}" class="btn btn-primary btn-lg">撮影を依頼する</a>
+        <a href="#jobs" class="btn btn-outline-light btn-lg">募集案件を見る</a>
+      </div>
+    </div>
+    <div class="col-md-4 mt-4 mt-md-0">
+      <div class="card p-3 h-100">
+        <h5 class="fw-semibold mb-2">Vision</h5>
+        <p class="small text-secondary mb-3">誰もが自分の人生の物語を持ち、どんな瞬間も未来へ語り継がれる。</p>
+        <ul class="small text-start ps-3 mb-0">
+          <li>人生のドラマを永久保存</li>
+          <li>撮影→販売→アーカイブを一気通貫</li>
+          <li>AI整理・年間アルバムで価値を最大化</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-5">
+  <div class="row g-3">
+    {% for highlight in phase_highlights %}
+      <div class="col-md-4">
+        <div class="card h-100 p-3">
+          <h6 class="text-info fw-bold">ROADMAP</h6>
+          <p class="mb-0">{{ highlight }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="jobs" class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">募集中の撮影案件</h2>
+    <a href="{{ url_for('matching_request') }}" class="btn btn-sm btn-outline-light">依頼を掲載する</a>
+  </div>
+
+  {% if jobs %}
+    <div class="row g-3">
+      {% for job in jobs %}
+        <div class="col-md-6">
+          <div class="card h-100 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h3 class="h5 mb-0">{{ job.title }}</h3>
+              <span class="badge bg-{{ 'success' if job.status=='open' else 'secondary' }}">
+                {% if job.status == 'open' %}募集中{% elif job.status == 'matched' %}マッチング済{% else %}クローズ{% endif %}
+              </span>
+            </div>
+            <p class="small text-secondary mb-2">
+              {{ job.sport_type or '種別未設定' }} /
+              {{ job.location or '場所調整中' }} /
+              {% if job.shoot_date %}{{ job.shoot_date.strftime("%Y-%m-%d") }}{% else %}日程調整中{% endif %}
+            </p>
+            <p class="mb-3">{{ job.description or '詳細はお問い合わせください。' }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="small text-secondary">
+                依頼者: {{ job.client_name }}
+              </div>
+              <a href="{{ url_for('matching_job_detail', job_id=job.id) }}" class="btn btn-outline-info btn-sm">詳細・応募</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card p-4 text-center text-secondary">
+      まだ公開案件はありません。最初の依頼を登録しましょう。
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+

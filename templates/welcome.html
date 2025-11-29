@@ -1,0 +1,37 @@
+{% extends "public_base.html" %}
+{% block title %}{{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="hero rounded-4 mb-4">
+  <div class="row align-items-center">
+    <div class="col-md-7">
+      <h1 class="display-5 fw-bold mb-3">{{ site_name }}</h1>
+      <p class="lead mb-3">
+        アメフトの熱量を、そのまま写真に。<br>
+        チーム公式カメラマンによる試合写真をオンラインで閲覧・注文できます。
+      </p>
+      <a href="{{ url_for('gallery_events') }}" class="btn btn-primary btn-lg">
+        ギャラリーを見る
+      </a>
+    </div>
+    <div class="col-md-5 text-center mt-4 mt-md-0">
+      <div class="card p-3">
+        <p class="mb-2 text-secondary small">公開中のイベント</p>
+        {% if events %}
+          <ul class="list-unstyled mb-0">
+            {% for e in events[:5] %}
+              <li class="mb-1">
+                <strong>{{ e.name }}</strong>
+                {% if e.date %}<span class="text-secondary small">({{ e.date.strftime("%Y-%m-%d") }})</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+          <a href="{{ url_for('gallery_events') }}" class="small text-info">すべてのイベントを見る →</a>
+        {% else %}
+          <p class="text-secondary">公開中のイベントはまだありません。</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

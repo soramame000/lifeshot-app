@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>{% block title %}JAN Photo Studio 管理{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-900 text-slate-100">
+  <div class="min-h-screen flex">
+    <!-- サイドナビ -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 hidden md:flex flex-col">
+      <div class="px-6 py-5 border-b border-slate-800">
+        <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Admin</div>
+        <div class="mt-1 text-lg font-semibold">JAN Photo Studio</div>
+      </div>
+      <nav class="flex-1 px-4 py-4 space-y-1 text-sm">
+        <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">ダッシュボード</a>
+        <a href="{{ url_for('list_orders') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">注文管理</a>
+        <a href="{{ url_for('list_products') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">商品マスタ</a>
+        <a href="{{ url_for('list_events') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">イベント管理</a>
+        <a href="{{ url_for('admin_photos') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">写真管理</a>
+        <a href="{{ url_for('admin_settings') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">設定</a>
+        <div class="border-t border-slate-800 my-3"></div>
+        <a href="{{ url_for('public_home') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-800">お客様サイトを見る</a>
+      </nav>
+      <div class="px-4 py-4 border-t border-slate-800 text-xs text-slate-500">
+        <a href="{{ url_for('logout') }}" class="hover:text-slate-200">ログアウト</a>
+      </div>
+    </aside>
+
+    <!-- メイン -->
+    <main class="flex-1 flex flex-col">
+      <!-- 上部バー（モバイル用簡易ナビ） -->
+      <header class="md:hidden px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div class="text-sm font-semibold">JAN Photo Studio 管理</div>
+        <a href="{{ url_for('logout') }}" class="text-xs text-slate-400 underline">ログアウト</a>
+      </header>
+
+      <div class="flex-1 p-4 md:p-8">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            <div class="space-y-2 mb-4">
+              {% for category, message in messages %}
+                {% set color = 'blue' %}
+                {% if category == 'success' %}{% set color = 'green' %}{% endif %}
+                {% if category == 'danger' %}{% set color = 'red' %}{% endif %}
+                {% if category == 'warning' %}{% set color = 'yellow' %}{% endif %}
+                {% if category == 'info' %}{% set color = 'sky' %}{% endif %}
+                <div class="px-3 py-2 rounded border border-{{ color }}-500/40 bg-{{ color }}-500/10 text-sm">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>

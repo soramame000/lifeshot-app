@@ -1,0 +1,68 @@
+{% extends "public_base.html" %}
+{% block title %}撮影を依頼する | LifeShot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="mb-4">
+      <a href="{{ url_for('matching_home') }}" class="text-secondary small">&larr; マッチングTOPへ戻る</a>
+      <h1 class="h3 fw-bold mt-2">撮影リクエスト登録</h1>
+      <p class="text-secondary">
+        撮って欲しいストーリーを教えてください。内容は管理画面で確認され、公開可能な情報のみがカメラマンに共有されます。
+      </p>
+    </div>
+
+    <div class="card p-4">
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">案件名 *</label>
+          <input type="text" name="title" class="form-control" value="{{ request.form.get('title','') }}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">競技・カテゴリー</label>
+          <input type="text" name="sport_type" class="form-control" placeholder="例) U18 アメリカンフットボール" value="{{ request.form.get('sport_type','') }}">
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">撮影希望日</label>
+            <input type="date" name="shoot_date" class="form-control" value="{{ request.form.get('shoot_date','') }}">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">場所</label>
+            <input type="text" name="location" class="form-control" placeholder="会場やエリア" value="{{ request.form.get('location','') }}">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">予算目安（最小）</label>
+            <input type="number" name="budget_min" class="form-control" min="0" value="{{ request.form.get('budget_min','') }}">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">予算目安（最大）</label>
+            <input type="number" name="budget_max" class="form-control" min="0" value="{{ request.form.get('budget_max','') }}">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">依頼内容</label>
+          <textarea name="description" class="form-control" rows="4" placeholder="どんな瞬間を残したいか、販売予定や特記事項など">{{ request.form.get('description','') }}</textarea>
+        </div>
+        <hr class="border-secondary">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">依頼者名 *</label>
+            <input type="text" name="client_name" class="form-control" value="{{ request.form.get('client_name','') }}" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">連絡先（メール or LINE） *</label>
+            <input type="text" name="client_contact" class="form-control" value="{{ request.form.get('client_contact','') }}" required>
+          </div>
+        </div>
+        <div class="text-end">
+          <button type="submit" class="btn btn-primary">この内容で募集を開始</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

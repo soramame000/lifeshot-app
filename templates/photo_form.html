@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h3 mb-3">ギャラリー用写真の登録</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<form method="post">
+  <div class="mb-3">
+    <label class="form-label">イベント名</label>
+    <input type="text" name="event_name" class="form-control" placeholder="例: 2025-11-16 加古川ボウル">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">写真番号（ファイル名など）</label>
+    <input type="text" name="photo_code" class="form-control" placeholder="例: DSC_1234" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">サムネイルURL</label>
+    <input type="text" name="thumbnail_url" class="form-control" placeholder="/static/photos/DSC_1234.jpg" required>
+    <div class="form-text">
+      例: <code>/static/photos/DSC_1234.jpg</code><br>
+      → プロジェクトの <code>static/photos</code> フォルダに画像ファイルを置いておく。
+    </div>
+  </div>
+
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="is_public" id="is_public" checked>
+    <label class="form-check-label" for="is_public">
+      公開する（お客さんのギャラリーに表示）
+    </label>
+  </div>
+
+  <button type="submit" class="btn btn-primary">登録</button>
+  <a href="{{ url_for('list_photos') }}" class="btn btn-secondary">ギャラリーに戻る</a>
+</form>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "public_base.html" %}
+{% block title %}決済完了 | LifeShot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card p-4 text-center">
+      {% if status == 'success' %}
+        <h1 class="h4 text-success mb-2">決済が完了しました</h1>
+        <p class="text-secondary mb-3">
+          ご注文 #{{ order.id }} の支払いが確認されました。カメラマンより納品やご連絡をお待ちください。
+        </p>
+      {% elif status == 'canceled' %}
+        <h1 class="h4 text-warning mb-2">決済がキャンセルされました</h1>
+        <p class="text-secondary mb-3">
+          必要であれば再度決済手続きを行ってください。
+        </p>
+      {% else %}
+        <h1 class="h4 text-info mb-2">決済ステータス: {{ status }}</h1>
+        <p class="text-secondary mb-3">
+          反映には数分かかる場合があります。最新状況は管理者までお問い合わせください。
+        </p>
+      {% endif %}
+      <a href="{{ url_for('gallery_photos', event_id=order.event_id) }}" class="btn btn-primary">ギャラリーに戻る</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

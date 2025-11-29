@@ -1,0 +1,109 @@
+{% extends "public_base.html" %}
+{% block title %}{{ site_name }} | LifeShot ホーム{% endblock %}
+
+{% block content %}
+<section class="hero rounded-4 p-4 p-md-5 mb-5 text-center text-md-start">
+  <div class="row align-items-center">
+    <div class="col-md-7">
+      <p class="text-info text-uppercase small fw-semibold mb-2">LifeShot / Vision</p>
+      <h1 class="display-5 fw-bold mb-3">人生アーカイブで世界を撮る。</h1>
+      <p class="lead mb-4 text-secondary">
+        その日のプレーも、仲間との笑顔も、未来に語り継ぐ資産に。<br>
+        {{ site_name }} は撮影・販売・アーカイブを一つにつなぐためのホームです。
+      </p>
+      <div class="d-flex flex-column flex-md-row gap-2">
+        <a href="{{ url_for('gallery_events') }}" class="btn btn-primary btn-lg">
+          最新ギャラリーを見る
+        </a>
+        <a href="{{ url_for('matching_request') }}" class="btn btn-outline-light btn-lg">
+          撮影を依頼する
+        </a>
+      </div>
+    </div>
+    <div class="col-md-5 mt-4 mt-md-0">
+      <div class="card p-4 border border-info/25 bg-slate-900/40">
+        <h5 class="fw-semibold mb-3">ライフショットでできること</h5>
+        <ul class="list-unstyled mb-0 text-secondary small">
+          <li class="mb-2">・撮影マッチングでカメラマンと選手をつなぐ</li>
+          <li class="mb-2">・撮影後すぐにオンライン販売＆収益分配</li>
+          <li class="mb-2">・人生をタイムラインで振り返れるアーカイブ</li>
+          <li>・PayPay / クレジットでスマート決済</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-5">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <p class="text-uppercase text-secondary small mb-2">Phase 1</p>
+        <h3 class="h5">撮影マッチング</h3>
+        <p class="text-secondary mb-0">スポーツ現場の需要を可視化し、カメラマンの得意分野とマッチングします。</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <p class="text-uppercase text-secondary small mb-2">Phase 2</p>
+        <h3 class="h5">販売・決済</h3>
+        <p class="text-secondary mb-0">PayPay / クレジット決済で安全に販売。購入データはすべてアーカイブへ。</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <p class="text-uppercase text-secondary small mb-2">Phase 3</p>
+        <h3 class="h5">人生アーカイブ</h3>
+        <p class="text-secondary mb-0">幼少期からプロまで、一人ひとりの時間軸で思い出を並べて残します。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-5">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100 p-4">
+        <h3 class="h5 mb-3">こんなシーンで活躍</h3>
+        <ul class="text-secondary small mb-0">
+          <li class="mb-2">クラブチーム / 学生チームの公式戦撮影と販売</li>
+          <li class="mb-2">ジュニア世代の年間アルバムづくり</li>
+          <li class="mb-2">遠征やツアーのフォトレポート配信</li>
+          <li>家族イベント（入学式 / 成人式）を一元管理</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100 p-4">
+        <h3 class="h5 mb-3">直近イベント</h3>
+        {% if events %}
+          <ul class="list-unstyled mb-0">
+            {% for ev in events %}
+              <li class="mb-3">
+                <div class="fw-semibold">{{ ev.name }}</div>
+                {% if ev.date %}<div class="small text-secondary">{{ ev.date.strftime("%Y-%m-%d") }}</div>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+          <a href="{{ url_for('gallery_events') }}" class="small text-info">すべてのイベントを見る →</a>
+        {% else %}
+          <p class="text-secondary mb-0">公開予定のイベントを準備中です。</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-5">
+  <div class="card p-4 p-md-5 text-center bg-slate-900/60 border border-info/30">
+    <h3 class="h4 mb-3">撮影データを、資産に変えよう。</h3>
+    <p class="text-secondary mb-4">
+      撮影依頼から販売、アーカイブまで一気通貫でサポートします。まずはギャラリーを覗くか、撮影依頼フォームからご相談ください。
+    </p>
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+      <a href="{{ url_for('matching_request') }}" class="btn btn-primary btn-lg">撮影依頼フォームへ</a>
+      <a href="{{ url_for('matching_home') }}" class="btn btn-outline-light btn-lg">LifeShot マッチングを見る</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

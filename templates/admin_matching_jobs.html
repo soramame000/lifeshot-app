@@ -1,0 +1,188 @@
+{% extends "admin_base.html" %}
+{% block title %}マッチング管理 | JAN Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h4 fw-bold mb-1">LifeShot マッチング</h1>
+    <p class="text-secondary small mb-0">
+      「撮影マッチング × 写真販売」の進捗を一元管理。募集→マッチング→イベント→販売→アーカイブの流れを止めない。
+    </p>
+  </div>
+  <a href="{{ url_for('matching_home') }}" target="_blank" class="btn btn-outline-light btn-sm">
+    公開ページを見る
+  </a>
+</div>
+
+<form method="get" class="row g-3 mb-4">
+  <div class="col-md-4">
+    <label class="form-label text-secondary small">ステータスで絞り込み</label>
+    <select name="status" class="form-select">
+      <option value="">すべて</option>
+      {% for value, label in job_status_options %}
+        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 d-flex align-items-end">
+    <button type="submit" class="btn btn-primary w-100">適用</button>
+  </div>
+</form>
+
+{% if jobs %}
+  {% for job in jobs %}
+    <div class="card mb-4" id="job-{{ job.id }}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h2 class="h5 mb-1">{{ job.title }}</h2>
+            <p class="text-secondary small mb-2">
+              競技: {{ job.sport_type or '未設定' }} /
+              場所: {{ job.location or '調整中' }} /
+              日程: {% if job.shoot_date %}{{ job.shoot_date.strftime("%Y-%m-%d") }}{% else %}調整中{% endif %}
+            </p>
+            <p class="mb-3">{{ job.description or '詳細未入力' }}</p>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-{{ 'success' if job.status=='open' else 'secondary' }} mb-2">
+              {% if job.status == 'open' %}募集中{% elif job.status == 'matched' %}マッチング済{% else %}クローズ{% endif %}
+            </span>
+            <div class="small text-secondary">
+              登録: {{ job.created_at.strftime("%Y-%m-%d") }}
+            </div>
+            <a class="small" href="{{ url_for('matching_job_detail', job_id=job.id) }}" target="_blank">公開詳細</a>
+          </div>
+        </div>
+
+        <div class="row mt-3 g-3">
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <div class="text-secondary small mb-1">依頼者</div>
+              <div class="fw-semibold">{{ job.client_name }}</div>
+              <div class="small text-secondary">{{ job.client_contact }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <div class="text-secondary small mb-1">予算レンジ</div>
+              {% if job.budget_min or job.budget_max %}
+                <div>¥{{ job.budget_min or '?' }} 〜 ¥{{ job.budget_max or '?' }}</div>
+              {% else %}
+                <div>ヒアリング中</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded p-3 h-100">
+              <div class="text-secondary small mb-1">イベント連携</div>
+              {% if job.event %}
+                <div class="fw-semibold">{{ job.event.name }}</div>
+                {% if job.event.date %}
+                  <div class="small text-secondary">{{ job.event.date.strftime("%Y-%m-%d") }}</div>
+                {% endif %}
+              {% else %}
+                <div>未リンク</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <form method="post" action="{{ url_for('admin_matching_job_update', job_id=job.id) }}" class="row g-3 mt-3">
+          <div class="col-md-3">
+            <label class="form-label small text-secondary">ステータス更新</label>
+            <select name="status" class="form-select form-select-sm">
+              {% for value, label in job_status_options %}
+                <option value="{{ value }}" {% if job.status == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small text-secondary">紐づけイベント</label>
+            <select name="event_id" class="form-select form-select-sm">
+              <option value="">未選択</option>
+              {% for event in events %}
+                <option value="{{ event.id }}" {% if job.event_id == event.id %}selected{% endif %}>
+                  {{ event.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small text-secondary">内部メモ</label>
+            <textarea name="internal_note" rows="1" class="form-control form-control-sm" placeholder="販売導線や分配ルールなど">{{ job.internal_note or '' }}</textarea>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-sm btn-primary">保存</button>
+          </div>
+        </form>
+
+        <div class="mt-4">
+          <h3 class="h6 mb-3">応募一覧（{{ job.offers|length }} 件）</h3>
+          {% if job.offers %}
+            <div class="table-responsive">
+              <table class="table table-dark table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>カメラマン</th>
+                    <th>連絡先</th>
+                    <th>提示額</th>
+                    <th>メッセージ</th>
+                    <th>参加可能日</th>
+                    <th>状態</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for offer in job.offers %}
+                    <tr>
+                      <td>{{ offer.photographer_name }}</td>
+                      <td class="small text-secondary">{{ offer.photographer_contact }}</td>
+                      <td>
+                        {% if offer.quote_amount %}
+                          ¥{{ "{:,}".format(offer.quote_amount) }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+                      <td class="small">{{ offer.message or '-' }}</td>
+                      <td>
+                        {% if offer.available_from %}
+                          {{ offer.available_from.strftime("%Y-%m-%d") }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary">{{ offer.status }}</span>
+                      </td>
+                      <td>
+                        <form method="post" action="{{ url_for('admin_matching_offer_status', offer_id=offer.id) }}" class="d-flex gap-2">
+                          <select name="status" class="form-select form-select-sm">
+                            {% for value, label in offer_status_options %}
+                              <option value="{{ value }}" {% if offer.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                          </select>
+                          <button type="submit" class="btn btn-sm btn-outline-light">更新</button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="border rounded p-3 text-secondary small">
+              応募はまだありません。公開ページからの導線を共有しましょう。
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="alert alert-secondary">
+    まだ案件はありません。まずは撮影リクエストを受け付けて公開しましょう。
+  </div>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,42 @@
+{% extends "admin_base.html" %}
+{% block title %}イベント編集 - JAN Admin{% endblock %}
+
+{% block content %}
+<h2 class="mt-2 mb-3">
+  {% if event %}イベント編集{% else %}新規イベント{% endif %}
+</h2>
+
+<div class="card p-4">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">イベント名</label>
+      <input type="text" name="name" class="form-control"
+             value="{{ event.name if event else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">日付</label>
+      <input type="date" name="date" class="form-control"
+             value="{% if event and event.date %}{{ event.date.strftime('%Y-%m-%d') }}{% endif %}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">ギャラリーパスワード</label>
+      <input type="text" name="gallery_password" class="form-control"
+             value="{{ event.gallery_password if event else '' }}">
+      <div class="form-text text-secondary">
+        このイベントの閲覧に必要なパスワード。空欄の場合は誰でも閲覧可能。
+      </div>
+    </div>
+    <div class="form-check form-switch mb-3">
+      <input class="form-check-input" type="checkbox" id="is_public" name="is_public"
+             {% if not event or event.is_public %}checked{% endif %}>
+      <label class="form-check-label" for="is_public">ギャラリー一覧に公開</label>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">メモ（オプション）</label>
+      <textarea name="note" class="form-control" rows="3">{{ event.note if event else '' }}</textarea>
+    </div>
+    <button class="btn btn-primary">保存</button>
+    <a href="{{ url_for('admin_events') }}" class="btn btn-secondary ms-2">戻る</a>
+  </form>
+</div>
+{% endblock %}

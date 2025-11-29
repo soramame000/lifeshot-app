@@ -1,0 +1,35 @@
+{% extends "public_base.html" %}
+{% block title %}{{ event.name }} - パスワード入力{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">{{ event.name }}</h2>
+{% if event.date %}
+  <p class="text-secondary">{{ event.date.strftime("%Y-%m-%d") }}</p>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card p-4 mt-3">
+      <h5 class="mb-3">ギャラリーに入る</h5>
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">お名前</label>
+          <input type="text" name="customer_name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">連絡先（メール / LINE など）</label>
+          <input type="text" name="contact" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">イベント用パスワード</label>
+          <input type="password" name="password" class="form-control" {% if event.gallery_password %}required{% endif %}>
+          {% if not event.gallery_password %}
+            <div class="form-text text-secondary">※ このイベントはパスワードなしで閲覧できます。</div>
+          {% endif %}
+        </div>
+        <button class="btn btn-primary w-100">ギャラリーに進む</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

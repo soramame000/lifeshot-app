@@ -1,0 +1,63 @@
+{% extends "public_base.html" %}
+{% block title %}写真注文 - {{ event.name }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">写真を注文する</h2>
+
+<div class="row">
+  <div class="col-md-5 mb-3">
+    <div class="card p-2">
+      <img src="{{ photo.image_url }}" alt="{{ photo.photo_code }}" class="img-fluid rounded mb-2">
+      <p class="small text-secondary mb-0">
+        イベント: {{ event.name }}<br>
+        写真番号: <strong>{{ photo.photo_code }}</strong>
+      </p>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card p-4">
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">お名前</label>
+          <input type="text" name="customer_name" class="form-control"
+                 value="{{ init_name }}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">連絡先（メール / LINE など）</label>
+          <input type="text" name="contact" class="form-control"
+                 value="{{ init_contact }}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">商品</label>
+          <select name="product_id" class="form-select" required>
+            <option value="">選択してください</option>
+            {% for p in products %}
+              <option value="{{ p.id }}">{{ p.name }}（{{ p.price }}円）</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">枚数</label>
+          <input type="number" name="quantity" class="form-control" value="1" min="1">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">支払い方法</label>
+          <select name="payment_method" class="form-select">
+            <option value="card">クレジットカード（Stripe決済）</option>
+            <option value="paypay">PayPay（アプリで支払い）</option>
+            <option value="manual">現地で支払う / 後日精算</option>
+          </select>
+          <div class="form-text">
+            オンライン決済を選択すると、注文送信後に決済ページへ移動します。
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">備考（オプション）</label>
+          <textarea name="note" class="form-control" rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary w-100">注文を送信する</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

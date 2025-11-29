@@ -1,0 +1,35 @@
+{% extends "admin_base.html" %}
+{% block title %}商品編集 - JAN Admin{% endblock %}
+
+{% block content %}
+<h2 class="mt-2 mb-3">
+  {% if product %}商品編集{% else %}新規商品{% endif %}
+</h2>
+
+<div class="card p-4">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">商品名</label>
+      <input type="text" name="name" class="form-control"
+             value="{{ product.name if product else '' }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">種別</label>
+      <select name="kind" class="form-select" required>
+        {% set current_kind = product.kind if product else '' %}
+        <option value="">選択してください</option>
+        <option value="print" {% if current_kind=='print' %}selected{% endif %}>プリント</option>
+        <option value="data" {% if current_kind=='data' %}selected{% endif %}>データ販売</option>
+        <option value="other" {% if current_kind=='other' %}selected{% endif %}>その他</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">価格（円）</label>
+      <input type="number" name="price" class="form-control"
+             value="{{ product.price if product else '' }}" required min="0">
+    </div>
+    <button class="btn btn-primary">保存</button>
+    <a href="{{ url_for('admin_products') }}" class="btn btn-secondary ms-2">戻る</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+static/photos/
+instance/sales.db
+venv/
+__pycache__/

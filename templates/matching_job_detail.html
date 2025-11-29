@@ -1,0 +1,108 @@
+{% extends "public_base.html" %}
+{% block title %}{{ job.title }} | LifeShot Matching{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <a href="{{ url_for('matching_home') }}" class="text-secondary small">&larr; 募集一覧に戻る</a>
+    <h1 class="h3 fw-bold mt-2">{{ job.title }}</h1>
+    <div class="d-flex gap-3 flex-wrap align-items-center mb-3">
+      <span class="badge bg-{{ 'success' if job.status=='open' else 'secondary' }}">
+        {% if job.status == 'open' %}募集中{% elif job.status == 'matched' %}マッチング済{% else %}終了{% endif %}
+      </span>
+      <span class="text-secondary small">
+        登録日: {{ job.created_at.strftime("%Y-%m-%d") }}
+      </span>
+    </div>
+
+    <div class="card p-4 mb-4">
+      <dl class="row mb-0">
+        <dt class="col-sm-4">競技・カテゴリ</dt>
+        <dd class="col-sm-8">{{ job.sport_type or '未設定' }}</dd>
+        <dt class="col-sm-4">撮影日</dt>
+        <dd class="col-sm-8">{% if job.shoot_date %}{{ job.shoot_date.strftime("%Y-%m-%d") }}{% else %}調整中{% endif %}</dd>
+        <dt class="col-sm-4">場所</dt>
+        <dd class="col-sm-8">{{ job.location or '調整中' }}</dd>
+        <dt class="col-sm-4">予算目安</dt>
+        <dd class="col-sm-8">
+          {% if job.budget_min or job.budget_max %}
+            ¥{{ job.budget_min or '?' }} 〜 ¥{{ job.budget_max or '?' }}
+          {% else %}
+            ヒアリング予定
+          {% endif %}
+        </dd>
+        <dt class="col-sm-4">依頼者</dt>
+        <dd class="col-sm-8">{{ job.client_name }}</dd>
+      </dl>
+      <hr class="border-secondary">
+      <p class="mb-0">{{ job.description or '詳細は依頼者へお問い合わせください。' }}</p>
+    </div>
+
+    <div class="mb-4">
+      <h2 class="h5 mb-3">応募状況</h2>
+      {% if offers %}
+        <div class="list-group">
+          {% for offer in offers %}
+            <div class="list-group-item bg-transparent text-light border-secondary mb-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ offer.photographer_name }}</strong>
+                  <span class="badge bg-secondary ms-2">
+                    {% if offer.status == 'pending' %}検討中{% elif offer.status == 'accepted' %}採用{% elif offer.status == 'declined' %}辞退{% else %}{{ offer.status }}{% endif %}
+                  </span>
+                </div>
+                <small class="text-secondary">
+                  {{ offer.created_at.strftime("%Y-%m-%d") }}
+                </small>
+              </div>
+              <p class="small text-secondary mb-1">連絡先: {{ offer.photographer_contact }}</p>
+              {% if offer.quote_amount %}
+                <p class="small text-secondary mb-1">提示額: ¥{{ "{:,}".format(offer.quote_amount) }}</p>
+              {% endif %}
+              <p class="mb-0">{{ offer.message or 'メッセージなし' }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card p-3 text-secondary">
+          まだ応募はありません。最初のカメラマンとしてエントリーできます。
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card p-4">
+      <h2 class="h5 mb-3">カメラマンとして応募する</h2>
+      {% if job.status != 'open' %}
+        <p class="text-secondary">この案件は募集を終了しています。</p>
+      {% else %}
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">氏名 / チーム名 *</label>
+            <input type="text" name="photographer_name" class="form-control" value="{{ request.form.get('photographer_name','') }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">連絡先（メール or SNS） *</label>
+            <input type="text" name="photographer_contact" class="form-control" value="{{ request.form.get('photographer_contact','') }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">参加可能日</label>
+            <input type="date" name="available_from" class="form-control" value="{{ request.form.get('available_from','') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">提示額（任意）</label>
+            <input type="number" name="quote_amount" class="form-control" min="0" value="{{ request.form.get('quote_amount','') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">メッセージ</label>
+            <textarea name="message" rows="4" class="form-control" placeholder="得意ジャンルや撮影実績、販売連携の提案など">{{ request.form.get('message','') }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">オファーを送信</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+

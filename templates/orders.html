@@ -1,0 +1,82 @@
+{% extends "admin_base.html" %}
+{% block title %}注文一覧 - JAN Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+  <h2 class="mb-0">注文一覧</h2>
+  <a href="{{ url_for('admin_order_new') }}" class="btn btn-primary btn-sm">新規注文</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <form class="row g-2">
+    <div class="col-md-3">
+      <label class="form-label mb-1">ステータス</label>
+      <select name="status" class="form-select form-select-sm">
+        <option value="">すべて</option>
+        <option value="unpaid" {% if q_status=='unpaid' %}selected{% endif %}>未入金</option>
+        <option value="paid" {% if q_status=='paid' %}selected{% endif %}>入金済み</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label mb-1">イベント名</label>
+      <input type="text" name="event" class="form-control form-control-sm"
+             value="{{ q_event }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label mb-1">お客様名</label>
+      <input type="text" name="customer" class="form-control form-control-sm"
+             value="{{ q_customer }}">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button class="btn btn-secondary btn-sm me-2">絞り込み</button>
+      <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-light btn-sm">リセット</a>
+    </div>
+  </form>
+</div>
+
+<div class="card p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="small text-secondary">
+      合計金額: {{ total_sales }} 円
+    </div>
+  </div>
+  <table class="table table-dark table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>日時</th>
+        <th>お客様</th>
+        <th>イベント</th>
+        <th>写真番号</th>
+        <th>商品</th>
+        <th>数量</th>
+        <th>金額</th>
+        <th>状態</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+        <tr>
+          <td>{{ o.id }}</td>
+          <td>{{ o.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>{{ o.customer_name }}</td>
+          <td>{{ o.event_name or '-' }}</td>
+          <td>{{ o.photo_code or '-' }}</td>
+          <td>{{ o.product.name if o.product else '-' }}</td>
+          <td>{{ o.quantity }}</td>
+          <td>{{ o.total_amount }} 円</td>
+          <td>{{ '入金済' if o.payment_status=='paid' else '未入金' }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('admin_order_detail', order_id=o.id) }}" class="btn btn-sm btn-outline-light">詳細</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="10" class="text-center text-secondary">注文がありません。</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

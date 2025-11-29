@@ -1,0 +1,43 @@
+{% extends "admin_base.html" %}
+{% block title %}注文詳細 - JAN Admin{% endblock %}
+
+{% block content %}
+<h2 class="mt-2 mb-3">注文詳細 #{{ order.id }}</h2>
+
+<div class="card p-4 mb-3">
+  <div class="row">
+    <div class="col-md-6">
+      <h5>基本情報</h5>
+      <p class="mb-1">日時: {{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</p>
+      <p class="mb-1">お客様: {{ order.customer_name }}</p>
+      <p class="mb-1">連絡先: {{ order.customer_contact or '-' }}</p>
+      <p class="mb-1">価格区分: {{ order.price_category or '-' }}</p>
+    </div>
+    <div class="col-md-6">
+      <h5>内容</h5>
+      <p class="mb-1">イベント: {{ order.event_name or '-' }}</p>
+      <p class="mb-1">写真番号: {{ order.photo_code or '-' }}</p>
+      <p class="mb-1">商品: {{ order.product.name if order.product else '-' }}</p>
+      <p class="mb-1">数量: {{ order.quantity }}</p>
+      <p class="mb-1">単価: {{ order.unit_price }} 円</p>
+      <p class="mb-1">合計: {{ order.total_amount }} 円</p>
+      <p class="mb-1">ステータス: {{ '入金済' if order.payment_status=='paid' else '未入金' }}</p>
+    </div>
+  </div>
+  {% if order.note %}
+    <hr>
+    <h6>メモ</h6>
+    <pre class="small text-secondary mb-0">{{ order.note }}</pre>
+  {% endif %}
+</div>
+
+<div class="d-flex">
+  {% if order.payment_status != 'paid' %}
+    <a href="{{ url_for('admin_order_mark_paid', order_id=order.id) }}"
+       class="btn btn-success me-2">
+      入金済みにする
+    </a>
+  {% endif %}
+  <a href="{{ url_for('admin_orders') }}" class="btn btn-secondary">一覧へ戻る</a>
+</div>
+{% endblock %}
