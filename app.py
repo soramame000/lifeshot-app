@@ -1402,3 +1402,9 @@ if __name__ == "__main__":
         pass
 
     app.run(debug=False, port=8765)
+
+
+@app.before_first_request
+def ensure_database_initialized():
+    """Renderなどで __main__ が実行されない場合でもDBを初期化する"""
+    init_db()
