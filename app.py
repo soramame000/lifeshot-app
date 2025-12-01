@@ -318,7 +318,7 @@ class Photo(db.Model):
     image_url = db.Column(db.String(255), nullable=False)
     is_public = db.Column(db.Boolean, default=True)
 
-    orders = db.relationship("Order", backref="photo_ref", lazy=True)
+    orders = db.relationship("Order", backref="photo_ref", lazy=True, overlaps="photo")
 
     def __repr__(self) -> str:  # type: ignore[override]
         return f"<Photo {self.photo_code}>"
