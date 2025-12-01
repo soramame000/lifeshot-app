@@ -1401,6 +1401,16 @@ def init_db():
             db.session.commit()
 
 
+def ensure_database_initialized():
+    """Renderなどで __main__ が実行されない場合でもDBを初期化する"""
+    with app.app_context():
+        init_db()
+
+
+# モジュール読み込み時にDBを初期化
+ensure_database_initialized()
+
+
 if __name__ == "__main__":
     init_db()
     # 自動でブラウザを開く
@@ -1410,9 +1420,3 @@ if __name__ == "__main__":
         pass
 
     app.run(debug=False, port=8765)
-
-
-@app.before_first_request
-def ensure_database_initialized():
-    """Renderなどで __main__ が実行されない場合でもDBを初期化する"""
-    init_db()
