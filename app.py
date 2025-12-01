@@ -41,7 +41,15 @@ app = Flask(__name__)
 # ==========
 
 # SQLite DB
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sales.db"
+default_db_dir = (
+    os.getenv("DATABASE_DIR")
+    or ("/tmp" if os.getenv("RENDER") else app.root_path)
+)
+os.makedirs(default_db_dir, exist_ok=True)
+default_db_path = os.path.join(default_db_dir, "sales.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL", f"sqlite:///{default_db_path}"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # セッション

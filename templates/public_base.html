@@ -52,7 +52,13 @@
         <div class="collapse navbar-collapse" id="navbarPublic">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('public_home') }}">ホーム</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="{{ url_for('gallery_events') }}">ギャラリー</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('matching_home') }}">LifeShot マッチング</a>
             </li>
           </ul>
           <div class="d-flex">
