@@ -370,11 +370,60 @@ def inject_globals():
         "get_current_photographer": _get_current_photographer,
     }
 
-# ローカル保存
+# ==========
+# ストレージ設定（R2 または ローカル）
+# ==========
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "nagori-photos")
+R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL")  # 例: https://pub-xxx.r2.dev または カスタムドメイン
+
+# R2が設定されているかチェック
+USE_R2 = all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL])
+
+if USE_R2:
+    import boto3
+    from botocore.config import Config
+    
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        config=Config(signature_version="s3v4"),
+        region_name="auto",
+    )
+    print("✅ Cloudflare R2 ストレージを使用します")
+else:
+    s3_client = None
+    print("⚠️ ローカルストレージを使用します（R2未設定）")
+
+# ローカル保存用フォルダ（R2未使用時のフォールバック）
 UPLOAD_FOLDER = os.path.join(app.root_path, "static", "photos")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+def upload_to_storage(file, filename: str) -> str:
+    """ファイルをストレージにアップロードし、URLを返す"""
+    if USE_R2 and s3_client:
+        # R2にアップロード
+        s3_client.upload_fileobj(
+            file,
+            R2_BUCKET_NAME,
+            filename,
+            ExtraArgs={"ContentType": file.content_type or "image/jpeg"}
+        )
+        return f"{R2_PUBLIC_URL}/{filename}"
+    else:
+        # ローカルに保存
+        save_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(save_path)
+        return f"/static/photos/{filename}"
+
 def get_photo_url(filename: str) -> str:
+    """写真のURLを取得"""
+    if USE_R2:
+        return f"{R2_PUBLIC_URL}/{filename}"
     return f"/static/photos/{filename}"
 
 # ==========
@@ -1114,10 +1163,9 @@ def photographer_photos_upload(event_id: int):
 
             # ユニークなファイル名を生成
             unique_filename = f"{event.event_code}_{uuid.uuid4().hex[:8]}_{filename}"
-            save_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-            file.save(save_path)
-
-            storage_url = get_photo_url(unique_filename)
+            
+            # ストレージにアップロード（R2またはローカル）
+            storage_url = upload_to_storage(file, unique_filename)
 
             photo = Photo(
                 event_id=event.id,
