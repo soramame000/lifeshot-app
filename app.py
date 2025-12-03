@@ -1,8 +1,9 @@
 """
-LifeShot - 写真販売SaaSプラットフォーム
+NAGORI（名残） - 写真販売SaaSプラットフォーム
 Phase 1 MVP
 
 カメラマン向け写真販売機能を提供するSaaSプラットフォーム
+「残された余韻を、永遠に。」
 """
 
 import base64
@@ -216,7 +217,7 @@ class AppSetting(db.Model):
     """アプリ全体の設定（運営管理者パスワードなど）"""
     id = db.Column(db.Integer, primary_key=True)
     admin_password = db.Column(db.String(200), nullable=False, default="admin123")
-    site_name = db.Column(db.String(100), nullable=False, default="LifeShot")
+    site_name = db.Column(db.String(100), nullable=False, default="NAGORI")
 
 class Photographer(db.Model):
     """カメラマン（サービス利用者）"""
@@ -1450,7 +1451,7 @@ def init_db():
 
         # 設定レコード
         if not AppSetting.query.get(1):
-            setting = AppSetting(id=1, admin_password="admin123", site_name="LifeShot")
+            setting = AppSetting(id=1, admin_password="admin123", site_name="NAGORI")
             db.session.add(setting)
             db.session.commit()
 

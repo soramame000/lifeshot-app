@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ site_name }} - カメラマンのための写真販売プラットフォーム</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>NAGORI（名残） - 残された余韻を、永遠に。</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #0066ff;
-      --primary-dark: #0052cc;
-      --accent: #00d4aa;
+      --primary: #8b5cf6;
+      --primary-dark: #7c3aed;
+      --accent: #f472b6;
+      --gold: #fbbf24;
       --dark: #0a0a0f;
       --darker: #050508;
       --light: #f8fafc;
-      --gray: #64748b;
+      --gray: #94a3b8;
       --card-bg: rgba(255, 255, 255, 0.03);
       --border: rgba(255, 255, 255, 0.08);
     }
@@ -25,7 +26,7 @@
     }
     
     body {
-      font-family: 'Noto Sans JP', 'Outfit', sans-serif;
+      font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
       background: var(--darker);
       color: var(--light);
       line-height: 1.7;
@@ -59,7 +60,7 @@
       font-weight: 800;
       color: var(--light);
       text-decoration: none;
-      letter-spacing: -0.02em;
+      letter-spacing: 0.05em;
     }
     
     .logo span {
@@ -67,6 +68,14 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+    }
+    
+    .logo-jp {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 0.7rem;
+      color: var(--gray);
+      margin-left: 0.5rem;
+      letter-spacing: 0.1em;
     }
     
     .nav-links {
@@ -102,14 +111,14 @@
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), #0077ff);
+      background: linear-gradient(135deg, var(--primary), var(--accent));
       color: white;
-      box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3);
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
     }
     
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(0, 102, 255, 0.4);
+      box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
     }
     
     .btn-outline {
@@ -140,7 +149,7 @@
       right: -30%;
       width: 100%;
       height: 200%;
-      background: radial-gradient(ellipse, rgba(0, 102, 255, 0.15) 0%, transparent 60%);
+      background: radial-gradient(ellipse, rgba(139, 92, 246, 0.15) 0%, transparent 60%);
       pointer-events: none;
     }
     
@@ -151,7 +160,7 @@
       left: -30%;
       width: 80%;
       height: 150%;
-      background: radial-gradient(ellipse, rgba(0, 212, 170, 0.1) 0%, transparent 60%);
+      background: radial-gradient(ellipse, rgba(244, 114, 182, 0.1) 0%, transparent 60%);
       pointer-events: none;
     }
     
@@ -177,11 +186,11 @@
     }
     
     .hero h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
       margin-bottom: 1.5rem;
     }
     
@@ -192,11 +201,20 @@
       background-clip: text;
     }
     
+    .hero h1 .tagline {
+      display: block;
+      font-size: 0.4em;
+      color: var(--gray);
+      margin-top: 0.5rem;
+      letter-spacing: 0.15em;
+    }
+    
     .hero-subtitle {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       color: var(--gray);
       max-width: 600px;
       margin-bottom: 2.5rem;
+      line-height: 1.9;
     }
     
     .hero-actions {
@@ -247,8 +265,8 @@
     }
     
     .section-header h2 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2.5rem;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 2.2rem;
       font-weight: 700;
       margin-bottom: 1rem;
     }
@@ -291,7 +309,7 @@
     }
     
     .feature-card h3 {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 600;
       margin-bottom: 0.75rem;
     }
@@ -372,13 +390,13 @@
     /* CTA */
     .cta {
       padding: 6rem 2rem;
-      background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(0, 212, 170, 0.1));
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(244, 114, 182, 0.1));
       text-align: center;
     }
     
     .cta h2 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2.5rem;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: 2.2rem;
       font-weight: 700;
       margin-bottom: 1rem;
     }
@@ -441,7 +459,7 @@
 <body>
   <header class="header">
     <div class="header-inner">
-      <a href="{{ url_for('home') }}" class="logo">Life<span>Shot</span></a>
+      <a href="{{ url_for('home') }}" class="logo">NAG<span>ORI</span><span class="logo-jp">名残</span></a>
       <nav class="nav-links">
         <a href="#features">機能</a>
         <a href="#pricing">料金</a>
@@ -454,15 +472,16 @@
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-badge">
-        🚀 カメラマン向け写真販売SaaS
+        📸 カメラマンのための写真販売プラットフォーム
       </div>
       <h1>
-        撮影に専念できる<br>
-        <span class="gradient">写真販売プラットフォーム</span>
+        <span class="gradient">残された余韻を、永遠に。</span>
+        <span class="tagline">NAGORI - 写真販売SaaS</span>
       </h1>
       <p class="hero-subtitle">
-        LifeShotは、個人カメラマンのための写真販売SaaSです。
-        面倒な販売管理から解放され、あなたは撮影に集中できます。
+        NAGORIは、個人カメラマンのための写真販売プラットフォーム。<br>
+        あなたが撮影した大切な瞬間を、簡単に販売・共有できます。<br>
+        面倒な管理から解放され、撮影に集中しましょう。
       </p>
       <div class="hero-actions">
         <a href="{{ url_for('photographer_signup') }}" class="btn btn-primary">
@@ -573,7 +592,7 @@
       <a href="#">特定商取引法に基づく表記</a>
       <a href="{{ url_for('admin_login') }}">運営管理</a>
     </div>
-    <p class="footer-copy">© 2025 LifeShot. All rights reserved.</p>
+    <p class="footer-copy">© 2025 NAGORI. All rights reserved.</p>
   </footer>
 </body>
 </html>
