@@ -440,7 +440,7 @@ async function startUpload() {
       formData.append('csrf_token', csrfToken);
       formData.append('photos', compressedFile);
       
-      const response = await fetch(`/events/${eventId}/photos/upload`, {
+      const response = await fetch(`/events/${eventId}/upload`, {
         method: 'POST',
         body: formData,
         headers: {
