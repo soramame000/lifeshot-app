@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>認証コード確認 - NAGORI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #8b5cf6;
+      --primary-dark: #7c3aed;
+      --accent: #f472b6;
+      --dark: #0f172a;
+      --darker: #020617;
+      --light: #f8fafc;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-800: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+      background: var(--darker);
+      color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .auth-container { width: 100%; max-width: 440px; }
+    
+    .auth-header { text-align: center; margin-bottom: 2rem; }
+    
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--light);
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    
+    .logo span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .auth-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .auth-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .auth-subtitle { color: var(--gray-500); font-size: 0.9rem; }
+    
+    .auth-card {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+    }
+    
+    .alert {
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+    
+    .alert-info {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--primary);
+    }
+    
+    .form-group { margin-bottom: 1.5rem; }
+    
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--gray-400);
+    }
+    
+    .code-input {
+      width: 100%;
+      padding: 1rem;
+      background: var(--gray-800);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--light);
+      font-size: 1.5rem;
+      text-align: center;
+      letter-spacing: 0.5em;
+      font-family: 'Outfit', monospace;
+    }
+    
+    .code-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .code-input::placeholder { 
+      color: var(--gray-500);
+      letter-spacing: 0.2em;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+    }
+    
+    .email-display {
+      background: var(--gray-800);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--gray-400);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    .resend-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--gray-500);
+    }
+    
+    .resend-link a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--gray-500);
+    }
+    
+    .auth-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-header">
+      <a href="{{ url_for('home') }}" class="logo">NAG<span>ORI</span></a>
+      <div class="auth-icon">🔐</div>
+      <h1 class="auth-title">認証コードを入力</h1>
+      <p class="auth-subtitle">メールに送信された6桁のコードを入力してください</p>
+    </div>
+    
+    <div class="auth-card">
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <div class="email-display">
+        📧 {{ email }}
+      </div>
+      
+      <form method="POST" action="{{ url_for('verify_2fa') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label class="form-label">認証コード（6桁）</label>
+          <input type="text" name="code" class="code-input" placeholder="000000" 
+                 maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required autofocus>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">確認</button>
+      </form>
+      
+      <p class="resend-link">
+        コードが届かない場合は <a href="{{ url_for('photographer_login') }}">再度ログイン</a> してください
+      </p>
+    </div>
+    
+    <p class="auth-footer">
+      <a href="{{ url_for('photographer_login') }}">← ログインに戻る</a>
+    </p>
+  </div>
+</body>
+</html>
+

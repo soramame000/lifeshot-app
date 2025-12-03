@@ -121,6 +121,15 @@ login_attempts = {}
 MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION = 300  # 5分間ロックアウト
 
+# 二要素認証コード保存用
+verification_codes = {}
+VERIFICATION_CODE_EXPIRY = 300  # 5分間有効
+
+# 不審なIPアドレス追跡用
+suspicious_ips = {}
+SUSPICIOUS_THRESHOLD = 20  # 1時間に20回以上のアクセスで制限
+SUSPICIOUS_WINDOW = 3600  # 1時間
+
 db = SQLAlchemy(app)
 
 # ==========
@@ -180,6 +189,148 @@ def sanitize_input(value: str, max_length: int = 500) -> str:
     # 制御文字を除去
     value = "".join(char for char in value if ord(char) >= 32 or char in "\n\r\t")
     return value.strip()
+
+def generate_verification_code() -> str:
+    """6桁の認証コードを生成"""
+    import random
+    return str(random.randint(100000, 999999))
+
+def store_verification_code(email: str, code: str):
+    """認証コードを保存"""
+    verification_codes[email] = {
+        "code": code,
+        "created_at": time.time(),
+        "attempts": 0
+    }
+
+def verify_code(email: str, code: str) -> Tuple[bool, str]:
+    """認証コードを検証"""
+    if email not in verification_codes:
+        return False, "認証コードが見つかりません。再度ログインしてください"
+    
+    data = verification_codes[email]
+    
+    # 有効期限チェック
+    if time.time() - data["created_at"] > VERIFICATION_CODE_EXPIRY:
+        del verification_codes[email]
+        return False, "認証コードの有効期限が切れました。再度ログインしてください"
+    
+    # 試行回数チェック
+    if data["attempts"] >= 3:
+        del verification_codes[email]
+        return False, "認証コードの入力回数が上限に達しました。再度ログインしてください"
+    
+    # コード検証
+    if data["code"] != code:
+        verification_codes[email]["attempts"] += 1
+        remaining = 3 - verification_codes[email]["attempts"]
+        return False, f"認証コードが正しくありません（残り{remaining}回）"
+    
+    # 成功
+    del verification_codes[email]
+    return True, ""
+
+def is_suspicious_ip(ip_address: str) -> bool:
+    """不審なIPアドレスかチェック"""
+    current_time = time.time()
+    
+    if ip_address not in suspicious_ips:
+        suspicious_ips[ip_address] = []
+    
+    # 古いアクセス記録を削除
+    suspicious_ips[ip_address] = [
+        t for t in suspicious_ips[ip_address] 
+        if current_time - t < SUSPICIOUS_WINDOW
+    ]
+    
+    # アクセスを記録
+    suspicious_ips[ip_address].append(current_time)
+    
+    # 閾値チェック
+    return len(suspicious_ips[ip_address]) > SUSPICIOUS_THRESHOLD
+
+def send_verification_email(email: str, code: str, name: str = "") -> bool:
+    """認証コードをメールで送信（本番環境ではSendGrid等を使用）"""
+    # 開発環境ではコンソールに出力
+    if not os.getenv("RENDER"):
+        print(f"[DEBUG] 認証コード送信: {email} -> {code}")
+        return True
+    
+    # 本番環境ではSendGrid等のメール送信サービスを使用
+    # TODO: SendGrid APIを実装
+    sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
+    if not sendgrid_api_key:
+        print(f"[WARN] SendGrid未設定。認証コード: {code}")
+        return True  # 設定されていない場合はスキップ
+    
+    try:
+        # SendGrid API呼び出し
+        response = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers={
+                "Authorization": f"Bearer {sendgrid_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "personalizations": [{"to": [{"email": email}]}],
+                "from": {"email": os.getenv("SENDGRID_FROM_EMAIL", "noreply@nagori.app")},
+                "subject": f"【NAGORI】ログイン認証コード: {code}",
+                "content": [{
+                    "type": "text/plain",
+                    "value": f"{name}様\n\nログイン認証コードは {code} です。\n\nこのコードは5分間有効です。\n\n心当たりがない場合は、このメールを無視してください。\n\n---\nNAGORI - 名残"
+                }]
+            }
+        )
+        return response.status_code == 202
+    except Exception as e:
+        print(f"[ERROR] メール送信失敗: {e}")
+        return False
+
+def send_login_notification(email: str, name: str, ip_address: str) -> bool:
+    """ログイン通知をメールで送信"""
+    if not os.getenv("RENDER"):
+        print(f"[DEBUG] ログイン通知: {email} からのログイン (IP: {ip_address})")
+        return True
+    
+    sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
+    if not sendgrid_api_key:
+        return True
+    
+    try:
+        login_time = datetime.now().strftime("%Y年%m月%d日 %H:%M")
+        response = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers={
+                "Authorization": f"Bearer {sendgrid_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "personalizations": [{"to": [{"email": email}]}],
+                "from": {"email": os.getenv("SENDGRID_FROM_EMAIL", "noreply@nagori.app")},
+                "subject": "【NAGORI】ログインがありました",
+                "content": [{
+                    "type": "text/plain",
+                    "value": f"{name}様\n\n{login_time}にログインがありました。\n\nIPアドレス: {ip_address}\n\n心当たりがない場合は、すぐにパスワードを変更してください。\n\n---\nNAGORI - 名残"
+                }]
+            }
+        )
+        return response.status_code == 202
+    except Exception as e:
+        print(f"[ERROR] ログイン通知送信失敗: {e}")
+        return False
+
+def require_password_confirmation(func):
+    """パスワード確認が必要なエンドポイント用デコレータ"""
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if request.method == "POST":
+            current_password = request.form.get("current_password", "")
+            photographer = get_current_photographer()
+            if photographer and not photographer.check_password(current_password):
+                flash("現在のパスワードが正しくありません", "danger")
+                return redirect(request.url)
+        return func(*args, **kwargs)
+    return decorated_function
 
 # セキュリティヘッダーを追加
 @app.after_request
@@ -353,6 +504,7 @@ class Photographer(db.Model):
     profile_image = db.Column(db.String(500), nullable=True)
     bank_account_info = db.Column(db.Text, nullable=True)  # JSON形式
     status = db.Column(db.String(20), default="active")  # active / suspended
+    two_factor_enabled = db.Column(db.Boolean, default=False)  # 二要素認証
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -636,6 +788,12 @@ def photographer_signup():
 @app.route("/login", methods=["GET", "POST"])
 def photographer_login():
     """カメラマンログイン"""
+    # 不審なIPアドレスチェック
+    client_ip = request.remote_addr
+    if is_suspicious_ip(client_ip):
+        flash("アクセスが制限されています。しばらく時間をおいて再度お試しください", "danger")
+        return render_template("photographer_login.html")
+    
     if request.method == "POST":
         email = sanitize_input(request.form.get("email", "")).lower()
         password = request.form.get("password", "")
@@ -643,31 +801,73 @@ def photographer_login():
         # アカウントロックチェック
         lock_key = f"photographer:{email}"
         if is_account_locked(lock_key):
-            remaining_time = int(LOCKOUT_DURATION - (time.time() - login_attempts[lock_key][1]))
-            flash(f"アカウントがロックされています。{remaining_time // 60}分後に再試行してください", "danger")
+            # セキュリティ：ロック時間を明示しない（汎用エラー）
+            flash("認証に失敗しました。しばらく時間をおいて再度お試しください", "danger")
             return redirect(url_for("photographer_login"))
 
         photographer = Photographer.query.filter_by(email=email).first()
         if photographer and photographer.check_password(password):
             if photographer.status == "suspended":
-                flash("このアカウントは停止されています", "danger")
+                # セキュリティ：停止理由を明示しない
+                flash("認証に失敗しました", "danger")
                 return redirect(url_for("photographer_login"))
             
             # ログイン成功：試行回数リセット
             reset_login_attempts(lock_key)
+            
+            # 二要素認証が有効な場合
+            if photographer.two_factor_enabled:
+                code = generate_verification_code()
+                store_verification_code(email, code)
+                send_verification_email(email, code, photographer.name)
+                session["pending_2fa_email"] = email
+                flash("認証コードをメールで送信しました", "info")
+                return redirect(url_for("verify_2fa"))
+            
+            # 通常ログイン
             session["photographer_id"] = photographer.id
-            session.permanent = True  # セッションを永続化
+            session.permanent = True
+            
+            # ログイン通知を送信
+            send_login_notification(email, photographer.name, client_ip)
+            
             flash(f"ようこそ {photographer.name} さん！", "success")
             return redirect(url_for("photographer_dashboard"))
 
         # ログイン失敗：試行回数を記録
         remaining = record_failed_login(lock_key)
-        if remaining > 0:
-            flash(f"メールアドレスまたはパスワードが正しくありません（残り{remaining}回）", "danger")
-        else:
-            flash(f"ログイン試行回数の上限に達しました。{LOCKOUT_DURATION // 60}分間ロックされます", "danger")
+        # セキュリティ：エラー内容を詳しく表示しない
+        flash("メールアドレスまたはパスワードが正しくありません", "danger")
 
     return render_template("photographer_login.html")
+
+@app.route("/verify-2fa", methods=["GET", "POST"])
+def verify_2fa():
+    """二要素認証コード確認"""
+    email = session.get("pending_2fa_email")
+    if not email:
+        return redirect(url_for("photographer_login"))
+    
+    if request.method == "POST":
+        code = request.form.get("code", "").strip()
+        
+        is_valid, error_msg = verify_code(email, code)
+        if is_valid:
+            photographer = Photographer.query.filter_by(email=email).first()
+            if photographer:
+                session.pop("pending_2fa_email", None)
+                session["photographer_id"] = photographer.id
+                session.permanent = True
+                
+                # ログイン通知を送信
+                send_login_notification(email, photographer.name, request.remote_addr)
+                
+                flash(f"ようこそ {photographer.name} さん！", "success")
+                return redirect(url_for("photographer_dashboard"))
+        else:
+            flash(error_msg, "danger")
+    
+    return render_template("verify_2fa.html", email=email)
 
 @app.route("/logout")
 def photographer_logout():
@@ -1113,6 +1313,29 @@ def photographer_password_change():
     flash("パスワードを変更しました", "success")
     return redirect(url_for("photographer_settings"))
 
+@app.route("/settings/2fa", methods=["POST"])
+@photographer_required
+def photographer_toggle_2fa():
+    """二要素認証のオン/オフ切り替え"""
+    photographer = get_current_photographer()
+    current_password = request.form.get("current_password", "")
+    
+    # パスワード確認（属性変更時の再認証）
+    if not photographer.check_password(current_password):
+        flash("パスワードが正しくありません", "danger")
+        return redirect(url_for("photographer_settings"))
+    
+    # トグル
+    photographer.two_factor_enabled = not photographer.two_factor_enabled
+    db.session.commit()
+    
+    if photographer.two_factor_enabled:
+        flash("二要素認証を有効にしました。次回ログイン時から認証コードが必要になります", "success")
+    else:
+        flash("二要素認証を無効にしました", "info")
+    
+    return redirect(url_for("photographer_settings"))
+
 # ==========
 # ギャラリー（購入者向け）
 # ==========
@@ -1469,16 +1692,21 @@ def stripe_webhook():
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     """運営管理者ログイン"""
-    # 管理者ログインはIPアドレスでロックを追跡
-    lock_key = f"admin:{request.remote_addr}"
+    client_ip = request.remote_addr
+    lock_key = f"admin:{client_ip}"
+    
+    # 不審なIPアドレスチェック
+    if is_suspicious_ip(client_ip):
+        flash("アクセスが制限されています", "danger")
+        return render_template("admin_login.html")
     
     if request.method == "POST":
         password = request.form.get("password", "")
         
         # アカウントロックチェック
         if is_account_locked(lock_key):
-            remaining_time = int(LOCKOUT_DURATION - (time.time() - login_attempts[lock_key][1]))
-            flash(f"ログインがロックされています。{remaining_time // 60}分後に再試行してください", "danger")
+            # セキュリティ：ロック時間を明示しない
+            flash("認証に失敗しました。しばらく時間をおいて再度お試しください", "danger")
             return redirect(url_for("admin_login"))
         
         setting = AppSetting.query.get(1)
@@ -1493,11 +1721,9 @@ def admin_login():
             return redirect(url_for("admin_dashboard"))
         else:
             # ログイン失敗：試行回数を記録
-            remaining = record_failed_login(lock_key)
-            if remaining > 0:
-                flash(f"パスワードが正しくありません（残り{remaining}回）", "danger")
-            else:
-                flash(f"ログイン試行回数の上限に達しました。{LOCKOUT_DURATION // 60}分間ロックされます", "danger")
+            record_failed_login(lock_key)
+            # セキュリティ：エラー内容を詳しく表示しない
+            flash("認証に失敗しました", "danger")
 
     return render_template("admin_login.html")
 

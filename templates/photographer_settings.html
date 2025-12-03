@@ -1,5 +1,5 @@
 {% extends "photographer_base.html" %}
-{% block title %}アカウント設定 - LifeShot{% endblock %}
+{% block title %}アカウント設定 - NAGORI{% endblock %}
 {% block page_title %}アカウント設定{% endblock %}
 
 {% block content %}
@@ -10,6 +10,7 @@
     </div>
     <div class="card-body">
       <form method="POST" action="{{ url_for('photographer_settings_update') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label class="form-label">お名前</label>
           <input type="text" name="name" class="form-input" value="{{ photographer.name }}" required>
@@ -34,10 +35,42 @@
   
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title">🔐 パスワード変更</h3>
+      <h3 class="card-title">🔐 セキュリティ設定</h3>
     </div>
     <div class="card-body">
+      <!-- 二要素認証 -->
+      <div class="security-section">
+        <div class="security-header">
+          <div class="security-info">
+            <h4>二要素認証（2FA）</h4>
+            <p class="form-hint">ログイン時にメールで認証コードを送信します</p>
+          </div>
+          <div class="security-status">
+            {% if photographer.two_factor_enabled %}
+              <span class="badge badge-success">有効</span>
+            {% else %}
+              <span class="badge badge-gray">無効</span>
+            {% endif %}
+          </div>
+        </div>
+        <form method="POST" action="{{ url_for('photographer_toggle_2fa') }}" class="security-action">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="current_password" id="2fa_password" value="">
+          {% if photographer.two_factor_enabled %}
+            <button type="button" class="btn btn-outline btn-sm" onclick="confirm2FA(this.form, '無効')">無効にする</button>
+          {% else %}
+            <button type="button" class="btn btn-primary btn-sm" onclick="confirm2FA(this.form, '有効')">有効にする</button>
+          {% endif %}
+        </form>
+      </div>
+      
+      <hr class="divider">
+      
+      <!-- パスワード変更 -->
       <form method="POST" action="{{ url_for('photographer_password_change') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h4 class="section-title">パスワード変更</h4>
+        
         <div class="form-group">
           <label class="form-label">現在のパスワード</label>
           <input type="password" name="current_password" class="form-input" required>
@@ -75,6 +108,16 @@
             <span class="badge badge-success">アクティブ</span>
           {% else %}
             <span class="badge badge-danger">停止中</span>
+          {% endif %}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">二要素認証</span>
+        <span class="info-value">
+          {% if photographer.two_factor_enabled %}
+            <span class="badge badge-success">有効</span>
+          {% else %}
+            <span class="badge badge-gray">無効</span>
           {% endif %}
         </span>
       </div>
@@ -119,6 +162,77 @@
   .info-value {
     font-weight: 500;
   }
+  
+  .security-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+  }
+  
+  .security-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+  }
+  
+  .security-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  .security-status {
+    margin-left: auto;
+  }
+  
+  .security-action {
+    margin-left: 1rem;
+  }
+  
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+  
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--light);
+  }
+  
+  .btn-outline:hover {
+    background: var(--card-bg);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  
+  .badge-gray {
+    background: var(--gray-700);
+    color: var(--gray-300);
+  }
 </style>
-{% endblock %}
 
+<script>
+function confirm2FA(form, action) {
+  const password = prompt('セキュリティのため、現在のパスワードを入力してください:');
+  if (password) {
+    document.getElementById('2fa_password').value = password;
+    form.submit();
+  }
+}
+</script>
+{% endblock %}
