@@ -1062,7 +1062,13 @@ def photographer_photos_upload(event_id: int):
     if request.method == "POST":
         files = request.files.getlist("photos")
         
+        # 非同期アップロード（Fetch API）の場合はJSONを返す
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  'application/json' in request.headers.get('Accept', '')
+        
         if not files or all(f.filename == "" for f in files):
+            if is_ajax:
+                return jsonify({"success": False, "error": "ファイルがありません"}), 400
             flash("アップロードする写真を選択してください", "danger")
             return redirect(url_for("photographer_photos_upload", event_id=event.id))
 
@@ -1109,6 +1115,15 @@ def photographer_photos_upload(event_id: int):
             saved_count += 1
 
         db.session.commit()
+        
+        # 非同期の場合はJSONを返す
+        if is_ajax:
+            return jsonify({
+                "success": True,
+                "saved": saved_count,
+                "skipped": skipped_count,
+                "rejected": rejected_count
+            })
 
         msg = f"{saved_count}枚の写真をアップロードしました"
         if skipped_count:

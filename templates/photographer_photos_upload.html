@@ -14,33 +14,58 @@
     <h3 class="card-title">📷 写真をアップロード</h3>
   </div>
   <div class="card-body">
-    <form method="POST" action="{{ url_for('photographer_photos_upload', event_id=event.id) }}" enctype="multipart/form-data" id="upload-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="upload-zone" id="upload-zone">
-        <div class="upload-icon">📁</div>
-        <h4>ファイルをドラッグ＆ドロップ</h4>
-        <p class="text-muted">または</p>
-        <label class="btn btn-primary">
-          ファイルを選択
-          <input type="file" name="photos" multiple accept="image/*" style="display: none;" id="file-input">
-        </label>
-        <p class="form-hint mt-2">JPG, PNG形式に対応。複数ファイル選択可。</p>
+    <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
+    <input type="hidden" id="event-id" value="{{ event.id }}">
+    
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-icon">📁</div>
+      <h4>ファイルをドラッグ＆ドロップ</h4>
+      <p class="text-muted">または</p>
+      <label class="btn btn-primary">
+        ファイルを選択
+        <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" id="file-input">
+      </label>
+      <p class="form-hint mt-2">JPG, PNG, GIF, WebP形式に対応。複数ファイル選択可。</p>
+      <p class="form-hint">画像は自動的に最適化されます（最大2048px）</p>
+    </div>
+    
+    <div id="preview-container" style="display: none;">
+      <div class="preview-header">
+        <span id="file-count">0枚選択中</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="clearFiles()">クリア</button>
       </div>
-      
-      <div id="preview-container" style="display: none;">
-        <div class="preview-header">
-          <span id="file-count">0枚選択中</span>
-          <button type="button" class="btn btn-outline btn-sm" onclick="clearFiles()">クリア</button>
-        </div>
-        <div class="preview-grid" id="preview-grid"></div>
+      <div class="preview-grid" id="preview-grid"></div>
+    </div>
+    
+    <!-- プログレスバー -->
+    <div id="progress-container" style="display: none;">
+      <div class="progress-header">
+        <span id="progress-text">アップロード中...</span>
+        <span id="progress-count">0 / 0</span>
       </div>
-      
-      <div class="mt-3">
-        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" disabled>
-          アップロードする
-        </button>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
       </div>
-    </form>
+      <div class="progress-status" id="progress-status"></div>
+    </div>
+    
+    <div class="mt-3" id="button-container">
+      <button type="button" class="btn btn-primary btn-lg" id="submit-btn" disabled onclick="startUpload()">
+        アップロードする
+      </button>
+    </div>
+    
+    <!-- 完了メッセージ -->
+    <div id="complete-container" style="display: none;">
+      <div class="complete-message">
+        <div class="complete-icon">✅</div>
+        <h4 id="complete-title">アップロード完了！</h4>
+        <p id="complete-text" class="text-muted"></p>
+        <a href="{{ url_for('photographer_event_detail', event_id=event.id) }}" class="btn btn-primary">
+          イベントページに戻る
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -57,7 +82,7 @@
   .upload-zone:hover,
   .upload-zone.dragover {
     border-color: var(--primary);
-    background: rgba(0, 102, 255, 0.05);
+    background: rgba(139, 92, 246, 0.05);
   }
   
   .upload-icon {
@@ -77,23 +102,94 @@
   
   .preview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.75rem;
-    max-height: 300px;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+    max-height: 200px;
     overflow-y: auto;
   }
   
   .preview-item {
     aspect-ratio: 1;
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
     background: var(--gray-800);
+    position: relative;
   }
   
   .preview-item img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  
+  .preview-item.uploading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+  }
+  
+  .preview-item.done::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    background: rgba(16, 185, 129, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+  }
+  
+  .preview-item.error::after {
+    content: '✕';
+    position: absolute;
+    inset: 0;
+    background: rgba(239, 68, 68, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+  }
+  
+  /* プログレスバー */
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .progress-bar-container {
+    height: 8px;
+    background: var(--gray-800);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary), #f472b6);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  
+  .progress-status {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+  }
+  
+  /* 完了メッセージ */
+  .complete-message {
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  .complete-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
   }
 </style>
 
@@ -104,8 +200,23 @@ const previewContainer = document.getElementById('preview-container');
 const previewGrid = document.getElementById('preview-grid');
 const fileCount = document.getElementById('file-count');
 const submitBtn = document.getElementById('submit-btn');
+const progressContainer = document.getElementById('progress-container');
+const progressBar = document.getElementById('progress-bar');
+const progressText = document.getElementById('progress-text');
+const progressCount = document.getElementById('progress-count');
+const progressStatus = document.getElementById('progress-status');
+const buttonContainer = document.getElementById('button-container');
+const completeContainer = document.getElementById('complete-container');
 
-let selectedFiles = new DataTransfer();
+const csrfToken = document.getElementById('csrf-token').value;
+const eventId = document.getElementById('event-id').value;
+
+let selectedFiles = [];
+let previewElements = [];
+
+// 最大画像サイズ（ピクセル）
+const MAX_SIZE = 2048;
+const JPEG_QUALITY = 0.85;
 
 // ドラッグ＆ドロップ
 uploadZone.addEventListener('dragover', (e) => {
@@ -134,34 +245,34 @@ fileInput.addEventListener('change', (e) => {
 function handleFiles(files) {
   for (let file of files) {
     if (file.type.startsWith('image/')) {
-      selectedFiles.items.add(file);
+      selectedFiles.push(file);
     }
   }
   updatePreview();
 }
 
-function updatePreview() {
+async function updatePreview() {
   previewGrid.innerHTML = '';
-  const files = selectedFiles.files;
+  previewElements = [];
   
-  if (files.length > 0) {
+  if (selectedFiles.length > 0) {
     previewContainer.style.display = 'block';
     uploadZone.style.display = 'none';
-    fileCount.textContent = `${files.length}枚選択中`;
+    fileCount.textContent = `${selectedFiles.length}枚選択中`;
     submitBtn.disabled = false;
     
-    for (let file of files) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const div = document.createElement('div');
-        div.className = 'preview-item';
-        div.innerHTML = `<img src="${e.target.result}" alt="${file.name}">`;
-        previewGrid.appendChild(div);
-      };
-      reader.readAsDataURL(file);
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      const div = document.createElement('div');
+      div.className = 'preview-item';
+      div.id = `preview-${i}`;
+      
+      // サムネイル生成（軽量化のため小さいサイズで）
+      const thumb = await createThumbnail(file, 100);
+      div.innerHTML = `<img src="${thumb}" alt="${file.name}">`;
+      previewGrid.appendChild(div);
+      previewElements.push(div);
     }
-    
-    fileInput.files = selectedFiles.files;
   } else {
     previewContainer.style.display = 'none';
     uploadZone.style.display = 'block';
@@ -170,15 +281,157 @@ function updatePreview() {
 }
 
 function clearFiles() {
-  selectedFiles = new DataTransfer();
+  selectedFiles = [];
+  previewElements = [];
   fileInput.value = '';
   updatePreview();
 }
 
-document.getElementById('upload-form').addEventListener('submit', function() {
+// サムネイル生成
+function createThumbnail(file, maxSize) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 画像圧縮
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        
+        // リサイズ
+        if (width > MAX_SIZE || height > MAX_SIZE) {
+          if (width > height) {
+            height = (height * MAX_SIZE) / width;
+            width = MAX_SIZE;
+          } else {
+            width = (width * MAX_SIZE) / height;
+            height = MAX_SIZE;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+        }, 'image/jpeg', JPEG_QUALITY);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// アップロード開始
+async function startUpload() {
+  if (selectedFiles.length === 0) return;
+  
+  // UI更新
   submitBtn.disabled = true;
-  submitBtn.textContent = 'アップロード中...';
-});
+  buttonContainer.style.display = 'none';
+  progressContainer.style.display = 'block';
+  
+  let successCount = 0;
+  let errorCount = 0;
+  const total = selectedFiles.length;
+  
+  for (let i = 0; i < total; i++) {
+    const file = selectedFiles[i];
+    const previewEl = previewElements[i];
+    
+    progressText.textContent = `アップロード中... ${file.name}`;
+    progressCount.textContent = `${i + 1} / ${total}`;
+    progressBar.style.width = `${((i) / total) * 100}%`;
+    
+    if (previewEl) previewEl.classList.add('uploading');
+    
+    try {
+      // 画像を圧縮
+      progressStatus.textContent = '画像を最適化中...';
+      const compressedFile = await compressImage(file);
+      
+      // アップロード
+      progressStatus.textContent = 'アップロード中...';
+      const formData = new FormData();
+      formData.append('csrf_token', csrfToken);
+      formData.append('photos', compressedFile);
+      
+      const response = await fetch(`/events/${eventId}/photos/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        successCount++;
+        if (previewEl) {
+          previewEl.classList.remove('uploading');
+          previewEl.classList.add('done');
+        }
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      errorCount++;
+      if (previewEl) {
+        previewEl.classList.remove('uploading');
+        previewEl.classList.add('error');
+      }
+      console.error('Upload error:', error);
+    }
+    
+    // プログレス更新
+    progressBar.style.width = `${((i + 1) / total) * 100}%`;
+  }
+  
+  // 完了
+  progressContainer.style.display = 'none';
+  completeContainer.style.display = 'block';
+  
+  const completeTitle = document.getElementById('complete-title');
+  const completeText = document.getElementById('complete-text');
+  
+  if (errorCount === 0) {
+    completeTitle.textContent = `${successCount}枚のアップロードが完了しました！`;
+    completeText.textContent = '';
+  } else {
+    completeTitle.textContent = 'アップロード完了';
+    completeText.textContent = `成功: ${successCount}枚 / 失敗: ${errorCount}枚`;
+  }
+}
 </script>
 {% endblock %}
-
