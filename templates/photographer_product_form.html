@@ -1,11 +1,12 @@
 {% extends "photographer_base.html" %}
-{% block title %}{% if product %}商品編集{% else %}商品追加{% endif %} - LifeShot{% endblock %}
+{% block title %}{% if product %}商品編集{% else %}商品追加{% endif %} - NAGORI{% endblock %}
 {% block page_title %}{% if product %}商品編集{% else %}商品追加{% endif %}{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 500px;">
   <div class="card-body">
     <form method="POST" action="{% if product %}{{ url_for('photographer_product_edit', product_id=product.id) }}{% else %}{{ url_for('photographer_product_new') }}{% endif %}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label class="form-label">商品名 <span class="text-danger">*</span></label>
         <input type="text" name="name" class="form-input" value="{{ product.name if product else '' }}" placeholder="例: データ販売（高画質）" required>

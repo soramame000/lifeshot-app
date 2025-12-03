@@ -1,11 +1,12 @@
 {% extends "photographer_base.html" %}
-{% block title %}{% if event %}イベント編集{% else %}新規イベント{% endif %} - LifeShot{% endblock %}
+{% block title %}{% if event %}イベント編集{% else %}新規イベント{% endif %} - NAGORI{% endblock %}
 {% block page_title %}{% if event %}イベント編集{% else %}新規イベント作成{% endif %}{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 600px;">
   <div class="card-body">
     <form method="POST" action="{% if event %}{{ url_for('photographer_event_edit', event_id=event.id) }}{% else %}{{ url_for('photographer_event_new') }}{% endif %}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label class="form-label">イベント名 <span class="text-danger">*</span></label>
         <input type="text" name="title" class="form-input" value="{{ event.title if event else '' }}" placeholder="例: 2025年春季大会" required>
@@ -53,6 +54,7 @@
       <h4 style="color: var(--danger); margin-bottom: 0.5rem;">⚠️ 危険な操作</h4>
       <p class="text-muted mb-2">このイベントを削除します。この操作は取り消せません。</p>
       <form action="{{ url_for('photographer_event_delete', event_id=event.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当にこのイベントを削除しますか？この操作は取り消せません。')">
           イベントを削除
         </button>

@@ -1,5 +1,5 @@
 {% extends "photographer_base.html" %}
-{% block title %}写真アップロード - {{ event.title }} - LifeShot{% endblock %}
+{% block title %}写真アップロード - {{ event.title }} - NAGORI{% endblock %}
 {% block page_title %}写真アップロード{% endblock %}
 
 {% block content %}
@@ -15,6 +15,7 @@
   </div>
   <div class="card-body">
     <form method="POST" action="{{ url_for('photographer_photos_upload', event_id=event.id) }}" enctype="multipart/form-data" id="upload-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="upload-zone" id="upload-zone">
         <div class="upload-icon">📁</div>
         <h4>ファイルをドラッグ＆ドロップ</h4>
