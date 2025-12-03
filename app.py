@@ -673,6 +673,9 @@ class GalleryAccess(db.Model):
 
 def get_current_photographer() -> Optional[Photographer]:
     """現在ログイン中のカメラマンを取得"""
+    # デコレータでgに格納されている場合はそれを使用
+    if hasattr(g, 'current_photographer') and g.current_photographer:
+        return g.current_photographer
     photographer_id = session.get("photographer_id")
     if photographer_id:
         return db.session.get(Photographer, photographer_id)
@@ -692,6 +695,8 @@ def photographer_required(view_func):
             session.pop("photographer_id", None)
             flash("セッションが無効です。再度ログインしてください", "warning")
             return redirect(url_for("photographer_login"))
+        # gオブジェクトにphotographerを格納（ビュー関数で再利用）
+        g.current_photographer = photographer
         return view_func(*args, **kwargs)
     return wrapper
 
@@ -1064,6 +1069,9 @@ def photographer_event_delete(event_id: int):
 def photographer_photos_upload(event_id: int):
     """写真アップロード"""
     photographer = get_current_photographer()
+    if not photographer:
+        flash("ログインが必要です", "warning")
+        return redirect(url_for("photographer_login"))
     event = Event.query.filter_by(id=event_id, photographer_id=photographer.id).first_or_404()
 
     if request.method == "POST":
