@@ -81,9 +81,16 @@ db = SQLAlchemy(app)
 @app.context_processor
 def inject_globals():
     """テンプレートから使えるグローバル変数"""
+    def _get_current_photographer():
+        photographer_id = session.get("photographer_id")
+        if photographer_id:
+            return db.session.get(Photographer, photographer_id)
+        return None
+    
     return {
         "datetime": datetime,
         "now": datetime.utcnow(),
+        "get_current_photographer": _get_current_photographer,
     }
 
 # ローカル保存
