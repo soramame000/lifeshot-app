@@ -8,6 +8,7 @@
   <div class="checkout-layout">
     <div class="checkout-form-section">
       <form method="POST" action="{{ url_for('gallery_checkout', event_code=event.event_code) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="card mb-3">
           <div class="card-header">
             <h3>お客様情報</h3>

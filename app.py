@@ -30,10 +30,20 @@ from flask import (
     session,
     url_for,
     send_file,
+    g,
 )
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+
+# レート制限（ログイン試行回数制限）
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    LIMITER_AVAILABLE = True
+except ImportError:
+    LIMITER_AVAILABLE = False
 
 try:
     import requests  # type: ignore[import]
@@ -77,7 +87,122 @@ app.config["PUBLIC_BASE_URL"] = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:5
 # プラットフォーム手数料（15%）
 PLATFORM_FEE_RATE = 0.15
 
+# ==========
+# セキュリティ設定
+# ==========
+
+# CSRF保護
+csrf = CSRFProtect(app)
+
+# セッションのセキュリティ設定
+app.config["SESSION_COOKIE_SECURE"] = os.getenv("RENDER") is not None  # 本番環境ではHTTPS必須
+app.config["SESSION_COOKIE_HTTPONLY"] = True  # JavaScriptからのアクセス禁止
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF対策
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)  # セッション有効期限
+
+# ファイルアップロード制限
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
+
+# レート制限の設定（ログイン試行回数制限）
+if LIMITER_AVAILABLE:
+    limiter = Limiter(
+        key_func=get_remote_address,
+        app=app,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://",
+    )
+else:
+    limiter = None
+
+# ログイン試行追跡用（メモリベース、本番ではRedis推奨）
+login_attempts = {}
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_DURATION = 300  # 5分間ロックアウト
+
 db = SQLAlchemy(app)
+
+# ==========
+# セキュリティ関数
+# ==========
+
+def is_account_locked(identifier: str) -> bool:
+    """アカウントがロックされているかチェック"""
+    if identifier not in login_attempts:
+        return False
+    attempts, last_attempt = login_attempts[identifier]
+    if attempts >= MAX_LOGIN_ATTEMPTS:
+        if time.time() - last_attempt < LOCKOUT_DURATION:
+            return True
+        # ロックアウト期間が過ぎたらリセット
+        del login_attempts[identifier]
+    return False
+
+def record_failed_login(identifier: str) -> int:
+    """ログイン失敗を記録し、残り試行回数を返す"""
+    current_time = time.time()
+    if identifier in login_attempts:
+        attempts, _ = login_attempts[identifier]
+        login_attempts[identifier] = (attempts + 1, current_time)
+    else:
+        login_attempts[identifier] = (1, current_time)
+    attempts, _ = login_attempts[identifier]
+    return MAX_LOGIN_ATTEMPTS - attempts
+
+def reset_login_attempts(identifier: str):
+    """ログイン成功時に試行回数をリセット"""
+    if identifier in login_attempts:
+        del login_attempts[identifier]
+
+def allowed_file(filename: str) -> bool:
+    """許可されたファイル拡張子かチェック"""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_email(email: str) -> bool:
+    """メールアドレスの簡易バリデーション"""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+def validate_password(password: str) -> Tuple[bool, str]:
+    """パスワードの強度チェック"""
+    if len(password) < 8:
+        return False, "パスワードは8文字以上で設定してください"
+    return True, ""
+
+def sanitize_input(value: str, max_length: int = 500) -> str:
+    """入力値のサニタイズ"""
+    if not value:
+        return ""
+    # 長さ制限
+    value = value[:max_length]
+    # 制御文字を除去
+    value = "".join(char for char in value if ord(char) >= 32 or char in "\n\r\t")
+    return value.strip()
+
+# セキュリティヘッダーを追加
+@app.after_request
+def add_security_headers(response):
+    """セキュリティヘッダーを追加"""
+    # XSS対策
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    # HTTPSの強制（本番環境のみ）
+    if os.getenv("RENDER"):
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # CSP（Content Security Policy）
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        "frame-src https://js.stripe.com https://hooks.stripe.com; "
+        "connect-src 'self' https://api.stripe.com;"
+    )
+    return response
 
 @app.context_processor
 def inject_globals():
@@ -466,16 +591,29 @@ def home():
 def photographer_signup():
     """カメラマン新規登録"""
     if request.method == "POST":
-        email = request.form.get("email", "").strip()
+        # 入力値のサニタイズ
+        email = sanitize_input(request.form.get("email", ""), max_length=254).lower()
         password = request.form.get("password", "")
-        name = request.form.get("name", "").strip()
+        name = sanitize_input(request.form.get("name", ""), max_length=100)
 
         if not email or not password or not name:
             flash("すべての項目を入力してください", "danger")
             return redirect(url_for("photographer_signup"))
-
-        if len(password) < 8:
-            flash("パスワードは8文字以上で設定してください", "danger")
+        
+        # メールアドレスのバリデーション
+        if not validate_email(email):
+            flash("有効なメールアドレスを入力してください", "danger")
+            return redirect(url_for("photographer_signup"))
+        
+        # パスワードのバリデーション
+        is_valid, error_msg = validate_password(password)
+        if not is_valid:
+            flash(error_msg, "danger")
+            return redirect(url_for("photographer_signup"))
+        
+        # 名前の長さチェック
+        if len(name) < 1 or len(name) > 50:
+            flash("お名前は1〜50文字で入力してください", "danger")
             return redirect(url_for("photographer_signup"))
 
         if Photographer.query.filter_by(email=email).first():
@@ -489,6 +627,7 @@ def photographer_signup():
 
         # 自動ログイン
         session["photographer_id"] = photographer.id
+        session.permanent = True
         flash(f"ようこそ {name} さん！アカウントが作成されました", "success")
         return redirect(url_for("photographer_dashboard"))
 
@@ -498,20 +637,35 @@ def photographer_signup():
 def photographer_login():
     """カメラマンログイン"""
     if request.method == "POST":
-        email = request.form.get("email", "").strip()
+        email = sanitize_input(request.form.get("email", "")).lower()
         password = request.form.get("password", "")
+        
+        # アカウントロックチェック
+        lock_key = f"photographer:{email}"
+        if is_account_locked(lock_key):
+            remaining_time = int(LOCKOUT_DURATION - (time.time() - login_attempts[lock_key][1]))
+            flash(f"アカウントがロックされています。{remaining_time // 60}分後に再試行してください", "danger")
+            return redirect(url_for("photographer_login"))
 
         photographer = Photographer.query.filter_by(email=email).first()
         if photographer and photographer.check_password(password):
             if photographer.status == "suspended":
                 flash("このアカウントは停止されています", "danger")
                 return redirect(url_for("photographer_login"))
-
+            
+            # ログイン成功：試行回数リセット
+            reset_login_attempts(lock_key)
             session["photographer_id"] = photographer.id
+            session.permanent = True  # セッションを永続化
             flash(f"ようこそ {photographer.name} さん！", "success")
             return redirect(url_for("photographer_dashboard"))
 
-        flash("メールアドレスまたはパスワードが正しくありません", "danger")
+        # ログイン失敗：試行回数を記録
+        remaining = record_failed_login(lock_key)
+        if remaining > 0:
+            flash(f"メールアドレスまたはパスワードが正しくありません（残り{remaining}回）", "danger")
+        else:
+            flash(f"ログイン試行回数の上限に達しました。{LOCKOUT_DURATION // 60}分間ロックされます", "danger")
 
     return render_template("photographer_login.html")
 
@@ -714,6 +868,7 @@ def photographer_photos_upload(event_id: int):
 
         saved_count = 0
         skipped_count = 0
+        rejected_count = 0
 
         for file in files:
             if not file or file.filename == "":
@@ -721,6 +876,11 @@ def photographer_photos_upload(event_id: int):
 
             filename = secure_filename(file.filename)
             if not filename:
+                continue
+            
+            # セキュリティ：ファイル拡張子チェック
+            if not allowed_file(filename):
+                rejected_count += 1
                 continue
 
             photo_code = os.path.splitext(filename)[0]
@@ -753,7 +913,9 @@ def photographer_photos_upload(event_id: int):
         msg = f"{saved_count}枚の写真をアップロードしました"
         if skipped_count:
             msg += f"（{skipped_count}枚は重複のためスキップ）"
-        flash(msg, "success")
+        if rejected_count:
+            msg += f"（{rejected_count}枚は非対応形式のため拒否）"
+        flash(msg, "success" if saved_count > 0 else "warning")
         return redirect(url_for("photographer_event_detail", event_id=event.id))
 
     return render_template("photographer_photos_upload.html", event=event)
@@ -1266,8 +1428,9 @@ def download_photo(token: str, item_id: int):
 # ==========
 
 @app.route("/webhook/stripe", methods=["POST"])
+@csrf.exempt
 def stripe_webhook():
-    """Stripe Webhook"""
+    """Stripe Webhook（CSRF除外）"""
     if not stripe_available():
         return "", 204
 
@@ -1306,17 +1469,35 @@ def stripe_webhook():
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     """運営管理者ログイン"""
+    # 管理者ログインはIPアドレスでロックを追跡
+    lock_key = f"admin:{request.remote_addr}"
+    
     if request.method == "POST":
         password = request.form.get("password", "")
+        
+        # アカウントロックチェック
+        if is_account_locked(lock_key):
+            remaining_time = int(LOCKOUT_DURATION - (time.time() - login_attempts[lock_key][1]))
+            flash(f"ログインがロックされています。{remaining_time // 60}分後に再試行してください", "danger")
+            return redirect(url_for("admin_login"))
+        
         setting = AppSetting.query.get(1)
         admin_pw = setting.admin_password if setting else "admin123"
 
         if password == admin_pw:
+            # ログイン成功：試行回数リセット
+            reset_login_attempts(lock_key)
             session["admin_logged_in"] = True
+            session.permanent = True
             flash("管理者としてログインしました", "success")
             return redirect(url_for("admin_dashboard"))
         else:
-            flash("パスワードが正しくありません", "danger")
+            # ログイン失敗：試行回数を記録
+            remaining = record_failed_login(lock_key)
+            if remaining > 0:
+                flash(f"パスワードが正しくありません（残り{remaining}回）", "danger")
+            else:
+                flash(f"ログイン試行回数の上限に達しました。{LOCKOUT_DURATION // 60}分間ロックされます", "danger")
 
     return render_template("admin_login.html")
 

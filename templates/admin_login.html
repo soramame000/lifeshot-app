@@ -148,6 +148,7 @@
       {% endwith %}
       
       <form method="POST" action="{{ url_for('admin_login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label class="form-label">管理者パスワード</label>
           <input type="password" name="password" class="form-input" placeholder="パスワードを入力" required>

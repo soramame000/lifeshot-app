@@ -12,6 +12,7 @@
     </div>
     
     <form method="POST" action="{{ url_for('gallery_auth', event_code=event.event_code) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       {% if event.password %}
       <div class="form-group">
         <label class="form-label">パスワード</label>

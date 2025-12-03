@@ -178,6 +178,7 @@
       {% endwith %}
       
       <form method="POST" action="{{ url_for('photographer_login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label class="form-label">メールアドレス</label>
           <input type="email" name="email" class="form-input" placeholder="you@example.com" required>

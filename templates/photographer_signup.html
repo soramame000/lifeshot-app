@@ -206,9 +206,10 @@
         {% endif %}
       {% endwith %}
       
-      <form method="POST" action="{{ url_for('photographer_signup') }}">
-        <div class="form-group">
-          <label class="form-label">お名前</label>
+        <form method="POST" action="{{ url_for('photographer_signup') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-group">
+            <label class="form-label">お名前</label>
           <input type="text" name="name" class="form-input" placeholder="山田 太郎" required>
         </div>
         
