@@ -1,29 +1,127 @@
-{% extends "public_base.html" %}
-{% block title %}決済完了 | LifeShot{% endblock %}
+{% extends "gallery_base.html" %}
+{% block title %}{% if status == 'success' %}ご購入ありがとうございます{% else %}決済がキャンセルされました{% endif %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-6">
-    <div class="card p-4 text-center">
-      {% if status == 'success' %}
-        <h1 class="h4 text-success mb-2">決済が完了しました</h1>
-        <p class="text-secondary mb-3">
-          ご注文 #{{ order.id }} の支払いが確認されました。カメラマンより納品やご連絡をお待ちください。
-        </p>
-      {% elif status == 'canceled' %}
-        <h1 class="h4 text-warning mb-2">決済がキャンセルされました</h1>
-        <p class="text-secondary mb-3">
-          必要であれば再度決済手続きを行ってください。
-        </p>
-      {% else %}
-        <h1 class="h4 text-info mb-2">決済ステータス: {{ status }}</h1>
-        <p class="text-secondary mb-3">
-          反映には数分かかる場合があります。最新状況は管理者までお問い合わせください。
-        </p>
-      {% endif %}
-      <a href="{{ url_for('gallery_photos', event_id=order.event_id) }}" class="btn btn-primary">ギャラリーに戻る</a>
+<div class="complete-container">
+  {% if status == 'success' %}
+  <div class="complete-card success">
+    <div class="complete-icon">✅</div>
+    <h1>ご購入ありがとうございます！</h1>
+    <p class="complete-message">
+      決済が完了しました。<br>
+      ダウンロードリンクをメールでお送りしました。
+    </p>
+    
+    <div class="order-info">
+      <div class="order-info-row">
+        <span>注文番号</span>
+        <span>#{{ order.id }}</span>
+      </div>
+      <div class="order-info-row">
+        <span>写真枚数</span>
+        <span>{{ order.items|length }}枚</span>
+      </div>
+      <div class="order-info-row">
+        <span>お支払い金額</span>
+        <span>¥{{ "{:,}".format(order.total_amount) }}</span>
+      </div>
     </div>
+    
+    {% if order.download_token %}
+    <a href="{{ url_for('download_page', token=order.download_token) }}" class="btn btn-primary btn-lg">
+      📥 写真をダウンロード
+    </a>
+    <p class="download-note">
+      ダウンロードリンクは7日間有効です
+    </p>
+    {% endif %}
   </div>
+  
+  {% else %}
+  <div class="complete-card canceled">
+    <div class="complete-icon">❌</div>
+    <h1>決済がキャンセルされました</h1>
+    <p class="complete-message">
+      お支払いが完了していません。<br>
+      再度購入手続きを行ってください。
+    </p>
+    
+    {% if order.event %}
+    <a href="{{ url_for('gallery_photos', event_code=order.event.event_code) }}" class="btn btn-primary btn-lg">
+      ギャラリーに戻る
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
-{% endblock %}
 
+<style>
+  .complete-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+  }
+  
+  .complete-card {
+    text-align: center;
+    max-width: 480px;
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+  }
+  
+  .complete-card.success {
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  
+  .complete-card.canceled {
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  
+  .complete-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .complete-card h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  
+  .complete-message {
+    color: var(--gray-400);
+    margin-bottom: 2rem;
+    line-height: 1.8;
+  }
+  
+  .order-info {
+    background: var(--gray-800);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .order-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .order-info-row:last-child {
+    border-bottom: none;
+    font-weight: 600;
+  }
+  
+  .download-note {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}

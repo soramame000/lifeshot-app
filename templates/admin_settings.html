@@ -1,24 +1,82 @@
 {% extends "admin_base.html" %}
-{% block title %}設定 - JAN Admin{% endblock %}
+{% block title %}設定 - LifeShot{% endblock %}
+{% block page_title %}設定{% endblock %}
 
 {% block content %}
-<h2 class="mt-2 mb-3">設定</h2>
-
-<div class="card p-4">
-  <form method="post">
-    <div class="mb-3">
-      <label class="form-label">サイト名</label>
-      <input type="text" name="site_name" class="form-control"
-             value="{{ setting.site_name }}">
+<div class="settings-grid">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">🏷️ サイト設定</h3>
     </div>
-    <div class="mb-3">
-      <label class="form-label">管理者パスワード（変更する場合のみ入力）</label>
-      <input type="password" name="admin_password" class="form-control">
-      <div class="form-text text-secondary">
-        空欄のまま保存すると、パスワードは変更されません。
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_settings') }}">
+        <div class="form-group">
+          <label class="form-label">サイト名</label>
+          <input type="text" name="site_name" class="form-input" value="{{ setting.site_name }}">
+        </div>
+        
+        <button type="submit" class="btn btn-primary">保存</button>
+      </form>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">🔐 管理者パスワード</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_settings') }}">
+        <div class="form-group">
+          <label class="form-label">新しいパスワード</label>
+          <input type="password" name="admin_password" class="form-input" placeholder="新しいパスワードを入力">
+        </div>
+        
+        <button type="submit" class="btn btn-primary">パスワードを変更</button>
+      </form>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">📊 システム情報</h3>
+    </div>
+    <div class="card-body">
+      <div class="info-row">
+        <span>プラットフォーム手数料率</span>
+        <span>15%</span>
+      </div>
+      <div class="info-row">
+        <span>決済手数料（Stripe）</span>
+        <span>3.6%</span>
+      </div>
+      <div class="info-row">
+        <span>実質手数料収入</span>
+        <span>11.4%</span>
       </div>
     </div>
-    <button class="btn btn-primary">保存</button>
-  </form>
+  </div>
 </div>
+
+<style>
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .info-row:last-child {
+    border-bottom: none;
+  }
+  
+  .info-row span:first-child {
+    color: var(--gray-500);
+  }
+</style>
 {% endblock %}

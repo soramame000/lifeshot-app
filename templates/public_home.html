@@ -1,109 +1,579 @@
-{% extends "public_base.html" %}
-{% block title %}{{ site_name }} | LifeShot ホーム{% endblock %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name }} - カメラマンのための写真販売プラットフォーム</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0066ff;
+      --primary-dark: #0052cc;
+      --accent: #00d4aa;
+      --dark: #0a0a0f;
+      --darker: #050508;
+      --light: #f8fafc;
+      --gray: #64748b;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', 'Outfit', sans-serif;
+      background: var(--darker);
+      color: var(--light);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      background: rgba(5, 5, 8, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--light);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    
+    .logo span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+    
+    .nav-links a {
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    .nav-links a:hover {
+      color: var(--light);
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #0077ff);
+      color: white;
+      box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 102, 255, 0.4);
+    }
+    
+    .btn-outline {
+      background: transparent;
+      color: var(--light);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-outline:hover {
+      background: var(--card-bg);
+      border-color: var(--primary);
+    }
+    
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 100%;
+      height: 200%;
+      background: radial-gradient(ellipse, rgba(0, 102, 255, 0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -50%;
+      left: -30%;
+      width: 80%;
+      height: 150%;
+      background: radial-gradient(ellipse, rgba(0, 212, 170, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .hero-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      margin-bottom: 2rem;
+    }
+    
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+    }
+    
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--gray);
+      max-width: 600px;
+      margin-bottom: 2.5rem;
+    }
+    
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--light);
+    }
+    
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 0.25rem;
+    }
+    
+    /* Features */
+    .features {
+      padding: 6rem 2rem;
+      background: var(--dark);
+    }
+    
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    
+    .section-header h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .section-header p {
+      color: var(--gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    
+    .feature-card {
+      padding: 2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.3s;
+    }
+    
+    .feature-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+    }
+    
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 12px;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    
+    .feature-card p {
+      color: var(--gray);
+      font-size: 0.95rem;
+    }
+    
+    /* Pricing */
+    .pricing {
+      padding: 6rem 2rem;
+    }
+    
+    .pricing-card {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 3rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      text-align: center;
+    }
+    
+    .pricing-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    
+    .pricing-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .pricing-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 4rem;
+      font-weight: 800;
+      margin: 1rem 0;
+    }
+    
+    .pricing-value span {
+      font-size: 1.5rem;
+      color: var(--gray);
+    }
+    
+    .pricing-desc {
+      color: var(--gray);
+      margin-bottom: 2rem;
+    }
+    
+    .pricing-features {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+    
+    .pricing-features li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .pricing-features li::before {
+      content: '✓';
+      color: var(--accent);
+      font-weight: 700;
+    }
+    
+    /* CTA */
+    .cta {
+      padding: 6rem 2rem;
+      background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(0, 212, 170, 0.1));
+      text-align: center;
+    }
+    
+    .cta h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .cta p {
+      color: var(--gray);
+      margin-bottom: 2rem;
+    }
+    
+    /* Footer */
+    .footer {
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--light);
+    }
+    
+    .footer-copy {
+      color: var(--gray);
+      font-size: 0.85rem;
+    }
+    
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      
+      .hero-stats {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      
+      .stat {
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a href="{{ url_for('home') }}" class="logo">Life<span>Shot</span></a>
+      <nav class="nav-links">
+        <a href="#features">機能</a>
+        <a href="#pricing">料金</a>
+        <a href="{{ url_for('photographer_login') }}" class="btn btn-outline">ログイン</a>
+        <a href="{{ url_for('photographer_signup') }}" class="btn btn-primary">無料で始める</a>
+      </nav>
+    </div>
+  </header>
 
-{% block content %}
-<section class="hero rounded-4 p-4 p-md-5 mb-5 text-center text-md-start">
-  <div class="row align-items-center">
-    <div class="col-md-7">
-      <p class="text-info text-uppercase small fw-semibold mb-2">LifeShot / Vision</p>
-      <h1 class="display-5 fw-bold mb-3">人生アーカイブで世界を撮る。</h1>
-      <p class="lead mb-4 text-secondary">
-        その日のプレーも、仲間との笑顔も、未来に語り継ぐ資産に。<br>
-        {{ site_name }} は撮影・販売・アーカイブを一つにつなぐためのホームです。
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">
+        🚀 カメラマン向け写真販売SaaS
+      </div>
+      <h1>
+        撮影に専念できる<br>
+        <span class="gradient">写真販売プラットフォーム</span>
+      </h1>
+      <p class="hero-subtitle">
+        LifeShotは、個人カメラマンのための写真販売SaaSです。
+        面倒な販売管理から解放され、あなたは撮影に集中できます。
       </p>
-      <div class="d-flex flex-column flex-md-row gap-2">
-        <a href="{{ url_for('gallery_events') }}" class="btn btn-primary btn-lg">
-          最新ギャラリーを見る
+      <div class="hero-actions">
+        <a href="{{ url_for('photographer_signup') }}" class="btn btn-primary">
+          無料でアカウント作成
         </a>
-        <a href="{{ url_for('matching_request') }}" class="btn btn-outline-light btn-lg">
-          撮影を依頼する
+        <a href="#features" class="btn btn-outline">
+          詳しく見る →
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-value">15%</div>
+          <div class="stat-label">業界最安水準の手数料</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">5分</div>
+          <div class="stat-label">セットアップ時間</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">∞</div>
+          <div class="stat-label">アップロード枚数無制限</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>すべてが揃ったオールインワン</h2>
+        <p>写真販売に必要な機能がすべて。技術的な知識は不要です。</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📸</div>
+          <h3>かんたん写真アップロード</h3>
+          <p>ドラッグ&ドロップで複数枚の写真を一括アップロード。自動でサムネイル生成。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>ワンクリックで共有</h3>
+          <p>イベントごとにURLを発行。パスワード保護で購入者だけが閲覧できます。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💳</div>
+          <h3>スムーズな決済</h3>
+          <p>クレジットカード・PayPay対応。購入者は簡単に支払い、即座にダウンロード。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>売上ダッシュボード</h3>
+          <p>リアルタイムで売上を確認。いつ、誰が、何を購入したか一目瞭然。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛒</div>
+          <h3>カート機能</h3>
+          <p>購入者は欲しい写真をカートに入れてまとめて購入。UX最適化済み。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⬇️</div>
+          <h3>自動ダウンロード配信</h3>
+          <p>支払い完了後、購入者にダウンロードリンクを自動送信。手間ゼロ。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="section-inner">
+      <div class="section-header">
+        <h2>シンプルな料金体系</h2>
+        <p>月額固定費は一切なし。売れた時だけ手数料が発生します。</p>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-badge">成果報酬型</div>
+        <h3 class="pricing-title">写真販売手数料</h3>
+        <div class="pricing-value">15<span>%</span></div>
+        <p class="pricing-desc">写真が売れた時のみ手数料が発生。初期費用・月額費用は0円。</p>
+        <ul class="pricing-features">
+          <li>アカウント作成無料</li>
+          <li>写真アップロード無制限</li>
+          <li>イベント作成無制限</li>
+          <li>クレジットカード・PayPay決済対応</li>
+          <li>自動ダウンロード配信</li>
+          <li>売上ダッシュボード</li>
+        </ul>
+        <a href="{{ url_for('photographer_signup') }}" class="btn btn-primary" style="width: 100%; justify-content: center;">
+          今すぐ無料で始める
         </a>
       </div>
     </div>
-    <div class="col-md-5 mt-4 mt-md-0">
-      <div class="card p-4 border border-info/25 bg-slate-900/40">
-        <h5 class="fw-semibold mb-3">ライフショットでできること</h5>
-        <ul class="list-unstyled mb-0 text-secondary small">
-          <li class="mb-2">・撮影マッチングでカメラマンと選手をつなぐ</li>
-          <li class="mb-2">・撮影後すぐにオンライン販売＆収益分配</li>
-          <li class="mb-2">・人生をタイムラインで振り返れるアーカイブ</li>
-          <li>・PayPay / クレジットでスマート決済</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="mb-5">
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card h-100 p-4">
-        <p class="text-uppercase text-secondary small mb-2">Phase 1</p>
-        <h3 class="h5">撮影マッチング</h3>
-        <p class="text-secondary mb-0">スポーツ現場の需要を可視化し、カメラマンの得意分野とマッチングします。</p>
-      </div>
+  <section class="cta">
+    <div class="section-inner">
+      <h2>今日から写真販売を始めよう</h2>
+      <p>アカウント作成は無料。5分で販売を開始できます。</p>
+      <a href="{{ url_for('photographer_signup') }}" class="btn btn-primary">
+        無料でアカウント作成
+      </a>
     </div>
-    <div class="col-md-4">
-      <div class="card h-100 p-4">
-        <p class="text-uppercase text-secondary small mb-2">Phase 2</p>
-        <h3 class="h5">販売・決済</h3>
-        <p class="text-secondary mb-0">PayPay / クレジット決済で安全に販売。購入データはすべてアーカイブへ。</p>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card h-100 p-4">
-        <p class="text-uppercase text-secondary small mb-2">Phase 3</p>
-        <h3 class="h5">人生アーカイブ</h3>
-        <p class="text-secondary mb-0">幼少期からプロまで、一人ひとりの時間軸で思い出を並べて残します。</p>
-      </div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="mb-5">
-  <div class="row g-4">
-    <div class="col-lg-6">
-      <div class="card h-100 p-4">
-        <h3 class="h5 mb-3">こんなシーンで活躍</h3>
-        <ul class="text-secondary small mb-0">
-          <li class="mb-2">クラブチーム / 学生チームの公式戦撮影と販売</li>
-          <li class="mb-2">ジュニア世代の年間アルバムづくり</li>
-          <li class="mb-2">遠征やツアーのフォトレポート配信</li>
-          <li>家族イベント（入学式 / 成人式）を一元管理</li>
-        </ul>
-      </div>
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="#">利用規約</a>
+      <a href="#">プライバシーポリシー</a>
+      <a href="#">特定商取引法に基づく表記</a>
+      <a href="{{ url_for('admin_login') }}">運営管理</a>
     </div>
-    <div class="col-lg-6">
-      <div class="card h-100 p-4">
-        <h3 class="h5 mb-3">直近イベント</h3>
-        {% if events %}
-          <ul class="list-unstyled mb-0">
-            {% for ev in events %}
-              <li class="mb-3">
-                <div class="fw-semibold">{{ ev.name }}</div>
-                {% if ev.date %}<div class="small text-secondary">{{ ev.date.strftime("%Y-%m-%d") }}</div>{% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-          <a href="{{ url_for('gallery_events') }}" class="small text-info">すべてのイベントを見る →</a>
-        {% else %}
-          <p class="text-secondary mb-0">公開予定のイベントを準備中です。</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="mb-5">
-  <div class="card p-4 p-md-5 text-center bg-slate-900/60 border border-info/30">
-    <h3 class="h4 mb-3">撮影データを、資産に変えよう。</h3>
-    <p class="text-secondary mb-4">
-      撮影依頼から販売、アーカイブまで一気通貫でサポートします。まずはギャラリーを覗くか、撮影依頼フォームからご相談ください。
-    </p>
-    <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
-      <a href="{{ url_for('matching_request') }}" class="btn btn-primary btn-lg">撮影依頼フォームへ</a>
-      <a href="{{ url_for('matching_home') }}" class="btn btn-outline-light btn-lg">LifeShot マッチングを見る</a>
-    </div>
-  </div>
-</section>
-{% endblock %}
+    <p class="footer-copy">© 2025 LifeShot. All rights reserved.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,137 @@
+{% extends "photographer_base.html" %}
+{% block title %}ダッシュボード - LifeShot{% endblock %}
+{% block page_title %}ダッシュボード{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">今月の売上</div>
+    <div class="stat-value">¥{{ "{:,}".format(monthly_sales) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">累計売上</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_sales) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">累計注文数</div>
+    <div class="stat-value">{{ total_orders }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">公開中の写真</div>
+    <div class="stat-value">{{ total_photos }}</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">📅 イベント一覧</h3>
+      <a href="{{ url_for('photographer_event_new') }}" class="btn btn-primary btn-sm">+ 新規作成</a>
+    </div>
+    <div class="card-body">
+      {% if events %}
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>イベント名</th>
+                <th>日付</th>
+                <th>写真数</th>
+                <th>ステータス</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events[:5] %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('photographer_event_detail', event_id=event.id) }}" style="color: var(--light); text-decoration: none;">
+                    {{ event.title }}
+                  </a>
+                </td>
+                <td class="text-muted">{{ event.event_date.strftime('%Y/%m/%d') if event.event_date else '-' }}</td>
+                <td>{{ event.photos|length }}枚</td>
+                <td>
+                  {% if event.status == 'published' %}
+                    <span class="badge badge-success">公開中</span>
+                  {% elif event.status == 'closed' %}
+                    <span class="badge badge-gray">終了</span>
+                  {% else %}
+                    <span class="badge badge-warning">下書き</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if events|length > 5 %}
+        <div class="mt-2 text-right">
+          <a href="{{ url_for('photographer_events') }}" class="btn btn-outline btn-sm">すべて見る →</a>
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📅</div>
+          <h4 class="empty-state-title">イベントがありません</h4>
+          <p class="empty-state-desc">最初のイベントを作成しましょう</p>
+          <a href="{{ url_for('photographer_event_new') }}" class="btn btn-primary">イベントを作成</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">💰 最近の売上</h3>
+      <a href="{{ url_for('photographer_sales') }}" class="btn btn-outline btn-sm">詳細を見る</a>
+    </div>
+    <div class="card-body">
+      {% if recent_orders %}
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>日時</th>
+                <th>購入者</th>
+                <th>枚数</th>
+                <th class="text-right">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in recent_orders %}
+              <tr>
+                <td class="text-muted">{{ order.created_at.strftime('%m/%d %H:%M') }}</td>
+                <td>{{ order.buyer_name }}</td>
+                <td>{{ order.items|length }}枚</td>
+                <td class="text-right">¥{{ "{:,}".format(order.photographer_amount) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">💰</div>
+          <h4 class="empty-state-title">まだ売上がありません</h4>
+          <p class="empty-state-desc">写真が売れると、ここに表示されます</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 900px) {
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+

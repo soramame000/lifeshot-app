@@ -1,0 +1,84 @@
+{% extends "photographer_base.html" %}
+{% block title %}{% if product %}商品編集{% else %}商品追加{% endif %} - LifeShot{% endblock %}
+{% block page_title %}{% if product %}商品編集{% else %}商品追加{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px;">
+  <div class="card-body">
+    <form method="POST" action="{% if product %}{{ url_for('photographer_product_edit', product_id=product.id) }}{% else %}{{ url_for('photographer_product_new') }}{% endif %}">
+      <div class="form-group">
+        <label class="form-label">商品名 <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-input" value="{{ product.name if product else '' }}" placeholder="例: データ販売（高画質）" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">種別 <span class="text-danger">*</span></label>
+        <select name="product_type" class="form-input" required>
+          <option value="data" {% if product and product.product_type == 'data' %}selected{% endif %}>データ販売（ダウンロード）</option>
+          <option value="print_l" {% if product and product.product_type == 'print_l' %}selected{% endif %}>L判プリント（準備中）</option>
+          <option value="print_2l" {% if product and product.product_type == 'print_2l' %}selected{% endif %}>2L判プリント（準備中）</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">価格（税込） <span class="text-danger">*</span></label>
+        <div class="price-input-wrapper">
+          <span class="price-prefix">¥</span>
+          <input type="number" name="price" class="form-input price-input" value="{{ product.price if product else '' }}" placeholder="300" min="100" required>
+        </div>
+        <p class="form-hint">あなたの取り分: ¥<span id="your-amount">0</span>（85%）</p>
+      </div>
+      
+      {% if product %}
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}>
+          <span>販売中にする</span>
+        </label>
+      </div>
+      {% endif %}
+      
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {% if product %}更新する{% else %}追加する{% endif %}
+        </button>
+        <a href="{{ url_for('photographer_products') }}" class="btn btn-outline">キャンセル</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .price-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .price-prefix {
+    position: absolute;
+    left: 1rem;
+    color: var(--gray-500);
+    font-weight: 600;
+  }
+  
+  .price-input {
+    padding-left: 2rem;
+  }
+</style>
+
+<script>
+const priceInput = document.querySelector('input[name="price"]');
+const yourAmount = document.getElementById('your-amount');
+
+function updateAmount() {
+  const price = parseInt(priceInput.value) || 0;
+  const amount = Math.floor(price * 0.85);
+  yourAmount.textContent = amount.toLocaleString();
+}
+
+priceInput.addEventListener('input', updateAmount);
+updateAmount();
+</script>
+{% endblock %}
+

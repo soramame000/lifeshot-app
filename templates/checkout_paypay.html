@@ -1,43 +1,143 @@
-{% extends "public_base.html" %}
-{% block title %}PayPayで支払う | LifeShot{% endblock %}
+{% extends "gallery_base.html" %}
+{% block title %}PayPay決済{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <div class="card p-4">
-      <h1 class="h4 fw-bold mb-3">PayPayで決済</h1>
-      <p class="text-secondary">
-        下記のQRコードをPayPayアプリで読み取るか、スマートフォンでアクセスして支払いを完了してください。
-      </p>
-
-      <div class="d-flex flex-column flex-md-row gap-4 align-items-start">
-        {% if paypay_data.qrCode %}
-          <img src="data:image/png;base64,{{ paypay_data.qrCode }}" alt="PayPay QR" class="border rounded" style="max-width: 280px;">
+<div class="paypay-container">
+  <div class="paypay-card">
+    <div class="paypay-header">
+      <h1>📱 PayPayでお支払い</h1>
+    </div>
+    
+    <div class="paypay-body">
+      <div class="qr-container">
+        {% if paypay_data.url %}
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ paypay_data.url | urlencode }}" alt="PayPay QRコード" class="qr-image">
+        {% else %}
+          <div class="qr-placeholder">QRコードを生成できませんでした</div>
         {% endif %}
-        <div class="flex-fill">
-          <p class="mb-1">
-            注文番号: <strong>#{{ order.id }}</strong><br>
-            金額: <strong>{{ order.total_amount }}円</strong>
-          </p>
-          <a href="{{ paypay_data.url or paypay_data.linkUrl }}" class="btn btn-primary mb-2" target="_blank" rel="noopener">
-            PayPayアプリを開いて支払う
-          </a>
-          {% if paypay_data.deepLink %}
-            <p class="small text-secondary mb-2">アプリで開けない場合: {{ paypay_data.deepLink }}</p>
-          {% endif %}
-          <p class="small text-secondary">
-            決済完了後、自動でステータスが更新されます。しばらく時間がかかる場合があります。
-          </p>
-        </div>
       </div>
-
-      <hr class="border-secondary my-4">
-      <p class="small text-secondary mb-0">
-        問題が発生した場合は {{ order.customer_contact }} までご連絡ください。<br>
-        この注文ページ: <a href="{{ url_for('checkout_order', order_id=order.id) }}">{{ url_for('checkout_order', order_id=order.id, _external=True) }}</a>
-      </p>
+      
+      <div class="paypay-info">
+        <p class="paypay-amount">
+          お支払い金額: <strong>¥{{ "{:,}".format(order.total_amount) }}</strong>
+        </p>
+        <p class="paypay-desc">
+          PayPayアプリでQRコードを読み取り、<br>
+          お支払いを完了してください。
+        </p>
+      </div>
+      
+      {% if paypay_data.url %}
+      <a href="{{ paypay_data.url }}" class="btn btn-primary btn-lg" style="width: 100%;">
+        PayPayアプリで開く
+      </a>
+      {% endif %}
+      
+      <div class="paypay-note">
+        <p>お支払い完了後、自動的にダウンロードページに移動します。</p>
+        <p>移動しない場合は、下記のリンクをクリックしてください。</p>
+        <a href="{{ url_for('checkout_complete', order_id=order.id, status='success') }}">
+          ダウンロードページへ
+        </a>
+      </div>
     </div>
   </div>
 </div>
-{% endblock %}
 
+<style>
+  .paypay-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+  }
+  
+  .paypay-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .paypay-header {
+    padding: 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .paypay-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  
+  .paypay-body {
+    padding: 2rem;
+  }
+  
+  .qr-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .qr-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 8px;
+    background: white;
+    padding: 1rem;
+  }
+  
+  .qr-placeholder {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-800);
+    border-radius: 8px;
+    color: var(--gray-500);
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .paypay-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .paypay-amount {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .paypay-amount strong {
+    font-size: 1.5rem;
+    color: var(--light);
+  }
+  
+  .paypay-desc {
+    color: var(--gray-400);
+    line-height: 1.8;
+  }
+  
+  .paypay-note {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+  }
+  
+  .paypay-note p {
+    margin-bottom: 0.5rem;
+  }
+  
+  .paypay-note a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+</style>
+{% endblock %}

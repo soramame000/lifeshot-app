@@ -1,0 +1,62 @@
+{% extends "admin_base.html" %}
+{% block title %}売上管理 - LifeShot{% endblock %}
+{% block page_title %}売上管理{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">累計GMV（流通総額）</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_gmv) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">累計プラットフォーム手数料（15%）</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_platform_fee) }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">💰 全注文一覧</h3>
+    <span class="text-muted">{{ orders|length }}件の注文</span>
+  </div>
+  {% if orders %}
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>注文ID</th>
+          <th>日時</th>
+          <th>カメラマン</th>
+          <th>イベント</th>
+          <th>購入者</th>
+          <th>枚数</th>
+          <th class="text-right">GMV</th>
+          <th class="text-right">手数料</th>
+          <th class="text-right">カメラマン取り分</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td>#{{ order.id }}</td>
+          <td class="text-muted">{{ order.created_at.strftime('%Y/%m/%d %H:%M') }}</td>
+          <td>{{ order.event.photographer.name if order.event and order.event.photographer else '-' }}</td>
+          <td>{{ order.event.title if order.event else '-' }}</td>
+          <td>{{ order.buyer_name }}</td>
+          <td>{{ order.items|length }}枚</td>
+          <td class="text-right">¥{{ "{:,}".format(order.total_amount) }}</td>
+          <td class="text-right" style="color: var(--primary);">¥{{ "{:,}".format(order.platform_fee) }}</td>
+          <td class="text-right">¥{{ "{:,}".format(order.photographer_amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body">
+    <p class="text-muted text-center">まだ注文がありません</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+

@@ -1,35 +1,71 @@
-{% extends "public_base.html" %}
-{% block title %}{{ event.name }} - パスワード入力{% endblock %}
+{% extends "gallery_base.html" %}
+{% block title %}{{ event.title }} - ギャラリー{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">{{ event.name }}</h2>
-{% if event.date %}
-  <p class="text-secondary">{{ event.date.strftime("%Y-%m-%d") }}</p>
-{% endif %}
-
-<div class="row">
-  <div class="col-md-6">
-    <div class="card p-4 mt-3">
-      <h5 class="mb-3">ギャラリーに入る</h5>
-      <form method="post">
-        <div class="mb-3">
-          <label class="form-label">お名前</label>
-          <input type="text" name="customer_name" class="form-control" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">連絡先（メール / LINE など）</label>
-          <input type="text" name="contact" class="form-control" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">イベント用パスワード</label>
-          <input type="password" name="password" class="form-control" {% if event.gallery_password %}required{% endif %}>
-          {% if not event.gallery_password %}
-            <div class="form-text text-secondary">※ このイベントはパスワードなしで閲覧できます。</div>
-          {% endif %}
-        </div>
-        <button class="btn btn-primary w-100">ギャラリーに進む</button>
-      </form>
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>📷 {{ event.title }}</h1>
+      {% if event.event_date %}
+        <p class="event-date">{{ event.event_date.strftime('%Y年%m月%d日') }}</p>
+      {% endif %}
     </div>
+    
+    <form method="POST" action="{{ url_for('gallery_auth', event_code=event.event_code) }}">
+      {% if event.password %}
+      <div class="form-group">
+        <label class="form-label">パスワード</label>
+        <input type="password" name="password" class="form-input" placeholder="パスワードを入力" required>
+      </div>
+      {% endif %}
+      
+      <div class="form-group">
+        <label class="form-label">お名前</label>
+        <input type="text" name="visitor_name" class="form-input" placeholder="山田 太郎">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input type="email" name="visitor_email" class="form-input" placeholder="you@example.com">
+      </div>
+      
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+        ギャラリーを見る
+      </button>
+    </form>
   </div>
 </div>
+
+<style>
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+  }
+  
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+  }
+  
+  .login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .login-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  .event-date {
+    color: var(--gray-500);
+  }
+</style>
 {% endblock %}

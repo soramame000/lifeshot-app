@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新規登録 - LifeShot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0066ff;
+      --primary-dark: #0052cc;
+      --accent: #00d4aa;
+      --dark: #0f172a;
+      --darker: #020617;
+      --light: #f8fafc;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-700: #334155;
+      --gray-800: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --danger: #ef4444;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', 'Outfit', sans-serif;
+      background: var(--darker);
+      color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .auth-container {
+      width: 100%;
+      max-width: 440px;
+    }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--light);
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    
+    .logo span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .auth-subtitle {
+      color: var(--gray-500);
+    }
+    
+    .auth-card {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+    }
+    
+    .alert {
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--gray-400);
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: var(--gray-800);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--light);
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .form-input::placeholder {
+      color: var(--gray-500);
+    }
+    
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 0.5rem;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #0077ff);
+      color: white;
+      box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 102, 255, 0.4);
+    }
+    
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--gray-500);
+    }
+    
+    .auth-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .terms {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      text-align: center;
+      margin-top: 1.5rem;
+      line-height: 1.6;
+    }
+    
+    .terms a {
+      color: var(--gray-400);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-header">
+      <a href="{{ url_for('home') }}" class="logo">Life<span>Shot</span></a>
+      <h1 class="auth-title">アカウント作成</h1>
+      <p class="auth-subtitle">無料でLifeShotを始めましょう</p>
+    </div>
+    
+    <div class="auth-card">
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <form method="POST" action="{{ url_for('photographer_signup') }}">
+        <div class="form-group">
+          <label class="form-label">お名前</label>
+          <input type="text" name="name" class="form-input" placeholder="山田 太郎" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">メールアドレス</label>
+          <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">パスワード</label>
+          <input type="password" name="password" class="form-input" placeholder="8文字以上" required minlength="8">
+          <p class="form-hint">8文字以上で設定してください</p>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">
+          アカウントを作成
+        </button>
+      </form>
+      
+      <p class="terms">
+        アカウントを作成することで、<a href="#">利用規約</a>と<a href="#">プライバシーポリシー</a>に同意したものとみなされます。
+      </p>
+    </div>
+    
+    <p class="auth-footer">
+      すでにアカウントをお持ちですか？
+      <a href="{{ url_for('photographer_login') }}">ログイン</a>
+    </p>
+  </div>
+</body>
+</html>
+

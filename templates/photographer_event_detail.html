@@ -1,0 +1,224 @@
+{% extends "photographer_base.html" %}
+{% block title %}{{ event.title }} - LifeShot{% endblock %}
+{% block page_title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-3">
+  <div class="flex items-center gap-2">
+    {% if event.status == 'published' %}
+      <span class="badge badge-success">公開中</span>
+    {% elif event.status == 'closed' %}
+      <span class="badge badge-gray">終了</span>
+    {% else %}
+      <span class="badge badge-warning">下書き</span>
+    {% endif %}
+    {% if event.event_date %}
+      <span class="text-muted">{{ event.event_date.strftime('%Y年%m月%d日') }}</span>
+    {% endif %}
+  </div>
+  <div class="flex gap-1">
+    <a href="{{ url_for('photographer_photos_upload', event_id=event.id) }}" class="btn btn-primary">📷 写真アップロード</a>
+    <a href="{{ url_for('photographer_event_edit', event_id=event.id) }}" class="btn btn-outline">編集</a>
+  </div>
+</div>
+
+{% if event.status == 'published' %}
+<div class="share-box mb-3">
+  <div class="share-label">🔗 ギャラリー共有URL</div>
+  <div class="share-url-box">
+    <code id="share-url">{{ url_for('gallery_login', event_code=event.event_code, _external=True) }}</code>
+    <button onclick="copyUrl()" class="btn btn-sm btn-secondary">コピー</button>
+  </div>
+  {% if event.password %}
+  <div class="share-password">パスワード: <code>{{ event.password }}</code></div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">写真数</div>
+    <div class="stat-value">{{ event.photos|length }}枚</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">注文数</div>
+    <div class="stat-value">{{ paid_orders|length }}件</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">売上（あなたの取り分）</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_sales) }}</div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">
+    <h3 class="card-title">📷 アップロード済み写真（{{ event.photos|length }}枚）</h3>
+    <a href="{{ url_for('photographer_photos_upload', event_id=event.id) }}" class="btn btn-outline btn-sm">+ 追加</a>
+  </div>
+  <div class="card-body">
+    {% if event.photos %}
+    <div class="photos-grid">
+      {% for photo in event.photos %}
+      <div class="photo-item">
+        <img src="{{ photo.storage_url }}" alt="{{ photo.photo_code }}" class="photo-thumb">
+        <div class="photo-overlay">
+          <span class="photo-code">{{ photo.photo_code }}</span>
+          <form action="{{ url_for('photographer_photo_delete', photo_id=photo.id) }}" method="POST" style="display: inline;">
+            <button type="submit" class="photo-delete" onclick="return confirm('この写真を削除しますか？')">🗑️</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📷</div>
+      <h4 class="empty-state-title">写真がありません</h4>
+      <p class="empty-state-desc">写真をアップロードして販売を開始しましょう</p>
+      <a href="{{ url_for('photographer_photos_upload', event_id=event.id) }}" class="btn btn-primary">写真をアップロード</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if paid_orders %}
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">💰 注文履歴</h3>
+  </div>
+  <div class="card-body">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>日時</th>
+            <th>購入者</th>
+            <th>メール</th>
+            <th>枚数</th>
+            <th class="text-right">金額</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in paid_orders %}
+          <tr>
+            <td class="text-muted">{{ order.created_at.strftime('%Y/%m/%d %H:%M') }}</td>
+            <td>{{ order.buyer_name }}</td>
+            <td class="text-muted">{{ order.buyer_email }}</td>
+            <td>{{ order.items|length }}枚</td>
+            <td class="text-right">¥{{ "{:,}".format(order.photographer_amount) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  .share-box {
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  
+  .share-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  
+  .share-url-box {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    background: var(--gray-800);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .share-url-box code {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  
+  .share-password {
+    font-size: 0.875rem;
+    color: var(--gray-400);
+  }
+  
+  .share-password code {
+    background: var(--gray-800);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    color: var(--warning);
+  }
+  
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+  }
+  
+  .photo-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--gray-800);
+  }
+  
+  .photo-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .photo-code {
+    font-size: 0.7rem;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .photo-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  
+  .photo-delete:hover {
+    opacity: 1;
+  }
+</style>
+
+<script>
+function copyUrl() {
+  const url = document.getElementById('share-url').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('URLをコピーしました！');
+  });
+}
+</script>
+{% endblock %}
+

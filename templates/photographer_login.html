@@ -3,16 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>運営ログイン - LifeShot</title>
+  <title>ログイン - LifeShot</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #8b5cf6;
+      --primary: #0066ff;
+      --primary-dark: #0052cc;
+      --accent: #00d4aa;
       --dark: #0f172a;
       --darker: #020617;
       --light: #f8fafc;
       --gray-400: #94a3b8;
       --gray-500: #64748b;
+      --gray-700: #334155;
       --gray-800: #1e293b;
       --border: rgba(255, 255, 255, 0.08);
       --danger: #ef4444;
@@ -31,7 +34,7 @@
       padding: 2rem;
     }
     
-    .auth-container { width: 100%; max-width: 400px; }
+    .auth-container { width: 100%; max-width: 440px; }
     
     .auth-header { text-align: center; margin-bottom: 2rem; }
     
@@ -45,20 +48,14 @@
       margin-bottom: 1rem;
     }
     
-    .logo span { color: var(--primary); }
-    
-    .admin-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      background: var(--primary);
-      color: white;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      margin-left: 0.5rem;
+    .logo span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     
-    .auth-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .auth-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
     .auth-subtitle { color: var(--gray-500); }
     
     .auth-card {
@@ -81,6 +78,18 @@
       color: var(--danger);
     }
     
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #f59e0b;
+    }
+    
+    .alert-info {
+      background: rgba(0, 102, 255, 0.15);
+      border: 1px solid rgba(0, 102, 255, 0.3);
+      color: var(--primary);
+    }
+    
     .form-group { margin-bottom: 1.25rem; }
     
     .form-label {
@@ -99,9 +108,15 @@
       border-radius: 8px;
       color: var(--light);
       font-size: 1rem;
+      transition: border-color 0.2s;
     }
     
-    .form-input:focus { outline: none; border-color: var(--primary); }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .form-input::placeholder { color: var(--gray-500); }
     
     .btn {
       display: inline-flex;
@@ -112,14 +127,22 @@
       border-radius: 8px;
       font-weight: 600;
       font-size: 1rem;
+      text-decoration: none;
       transition: all 0.2s;
       border: none;
       cursor: pointer;
-      background: var(--primary);
-      color: white;
     }
     
-    .btn:hover { opacity: 0.9; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #0077ff);
+      color: white;
+      box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 102, 255, 0.4);
+    }
     
     .auth-footer {
       text-align: center;
@@ -128,14 +151,21 @@
       color: var(--gray-500);
     }
     
-    .auth-footer a { color: var(--primary); text-decoration: none; }
+    .auth-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .auth-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="auth-container">
     <div class="auth-header">
-      <div class="logo">Life<span>Shot</span><span class="admin-badge">ADMIN</span></div>
-      <h1 class="auth-title">運営管理ログイン</h1>
+      <a href="{{ url_for('home') }}" class="logo">Life<span>Shot</span></a>
+      <h1 class="auth-title">おかえりなさい</h1>
+      <p class="auth-subtitle">アカウントにログイン</p>
     </div>
     
     <div class="auth-card">
@@ -147,19 +177,26 @@
         {% endif %}
       {% endwith %}
       
-      <form method="POST" action="{{ url_for('admin_login') }}">
+      <form method="POST" action="{{ url_for('photographer_login') }}">
         <div class="form-group">
-          <label class="form-label">管理者パスワード</label>
-          <input type="password" name="password" class="form-input" placeholder="パスワードを入力" required>
+          <label class="form-label">メールアドレス</label>
+          <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
         </div>
         
-        <button type="submit" class="btn">ログイン</button>
+        <div class="form-group">
+          <label class="form-label">パスワード</label>
+          <input type="password" name="password" class="form-input" placeholder="パスワード" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">ログイン</button>
       </form>
     </div>
     
     <p class="auth-footer">
-      <a href="{{ url_for('home') }}">← サイトに戻る</a>
+      アカウントをお持ちでないですか？
+      <a href="{{ url_for('photographer_signup') }}">新規登録</a>
     </p>
   </div>
 </body>
 </html>
+

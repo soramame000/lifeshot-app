@@ -83,32 +83,39 @@
 {% endblock %}
 
 {% block extra_js %}
+<div id="chartData" 
+     data-labels='{{ chart_labels|tojson }}' 
+     data-values='{{ chart_values|tojson }}'
+     style="display:none;"></div>
 <script>
-  const labels = {{ chart_labels|tojson }};
-  const values = {{ chart_values|tojson }};
+  (function() {
+    var chartDataEl = document.getElementById('chartData');
+    var labels = JSON.parse(chartDataEl.getAttribute('data-labels') || '[]');
+    var values = JSON.parse(chartDataEl.getAttribute('data-values') || '[]');
 
-  const ctx = document.getElementById('salesChart');
-  if (ctx && labels.length > 0) {
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: '売上（円）',
-          data: values,
-          tension: 0.3
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false }
+    var ctx = document.getElementById('salesChart');
+    if (ctx && labels && labels.length > 0) {
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '売上（円）',
+            data: values,
+            tension: 0.3
+          }]
         },
-        scales: {
-          x: { ticks: { color: '#9ca3af' } },
-          y: { ticks: { color: '#9ca3af' } }
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { color: '#9ca3af' } },
+            y: { ticks: { color: '#9ca3af' } }
+          }
         }
-      }
-    });
-  }
+      });
+    }
+  })();
 </script>
 {% endblock %}

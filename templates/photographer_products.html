@@ -1,0 +1,109 @@
+{% extends "photographer_base.html" %}
+{% block title %}商品設定 - LifeShot{% endblock %}
+{% block page_title %}商品設定{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-3">
+  <p class="text-muted">写真の販売価格を設定します</p>
+  <a href="{{ url_for('photographer_product_new') }}" class="btn btn-primary">+ 商品を追加</a>
+</div>
+
+{% if products %}
+<div class="card">
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>商品名</th>
+          <th>種別</th>
+          <th class="text-right">価格</th>
+          <th>ステータス</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>
+            <strong>{{ product.name }}</strong>
+          </td>
+          <td>
+            {% if product.product_type == 'data' %}
+              <span class="badge badge-info">データ販売</span>
+            {% elif product.product_type == 'print_l' %}
+              <span class="badge badge-gray">L判プリント</span>
+            {% elif product.product_type == 'print_2l' %}
+              <span class="badge badge-gray">2L判プリント</span>
+            {% else %}
+              <span class="badge badge-gray">{{ product.product_type }}</span>
+            {% endif %}
+          </td>
+          <td class="text-right">
+            <strong>¥{{ "{:,}".format(product.price) }}</strong>
+          </td>
+          <td>
+            {% if product.is_active %}
+              <span class="badge badge-success">販売中</span>
+            {% else %}
+              <span class="badge badge-gray">停止中</span>
+            {% endif %}
+          </td>
+          <td class="text-right">
+            <a href="{{ url_for('photographer_product_edit', product_id=product.id) }}" class="btn btn-outline btn-sm">編集</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="info-box mt-3">
+  <h4>💡 商品設定について</h4>
+  <ul>
+    <li>購入者は、ここで設定した商品の中から選んで購入します</li>
+    <li>データ販売の場合、購入者は決済後すぐにダウンロードできます</li>
+    <li>プリント販売はPhase 1.5で対応予定です</li>
+    <li>価格設定の85%があなたの取り分、15%がプラットフォーム手数料となります</li>
+  </ul>
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <div class="empty-state-icon">🏷️</div>
+      <h4 class="empty-state-title">商品がありません</h4>
+      <p class="empty-state-desc">写真の販売価格を設定しましょう</p>
+      <a href="{{ url_for('photographer_product_new') }}" class="btn btn-primary">商品を追加</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  .info-box {
+    background: rgba(0, 102, 255, 0.1);
+    border: 1px solid rgba(0, 102, 255, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  
+  .info-box h4 {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  
+  .info-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: var(--gray-400);
+    font-size: 0.9rem;
+  }
+  
+  .info-box li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+{% endblock %}
+

@@ -1,0 +1,282 @@
+{% extends "gallery_base.html" %}
+{% block title %}購入手続き - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+  <h1 class="mb-3">💳 購入手続き</h1>
+  
+  <div class="checkout-layout">
+    <div class="checkout-form-section">
+      <form method="POST" action="{{ url_for('gallery_checkout', event_code=event.event_code) }}">
+        <div class="card mb-3">
+          <div class="card-header">
+            <h3>お客様情報</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">お名前 <span class="text-danger">*</span></label>
+              <input type="text" name="buyer_name" class="form-input" value="{{ visitor_name }}" placeholder="山田 太郎" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">メールアドレス <span class="text-danger">*</span></label>
+              <input type="email" name="buyer_email" class="form-input" value="{{ visitor_email }}" placeholder="you@example.com" required>
+              <p class="form-hint">ダウンロードリンクをお送りします</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mb-3">
+          <div class="card-header">
+            <h3>お支払い方法</h3>
+          </div>
+          <div class="card-body">
+            <div class="payment-options">
+              <label class="payment-option">
+                <input type="radio" name="payment_method" value="card" checked>
+                <span class="payment-option-content">
+                  <span class="payment-icon">💳</span>
+                  <span class="payment-name">クレジットカード</span>
+                  <span class="payment-desc">VISA / Mastercard / JCB / AMEX</span>
+                </span>
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="payment_method" value="paypay">
+                <span class="payment-option-content">
+                  <span class="payment-icon">📱</span>
+                  <span class="payment-name">PayPay</span>
+                  <span class="payment-desc">QRコードでお支払い</span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+          ¥{{ "{:,}".format(cart.total_amount) }} を支払う
+        </button>
+      </form>
+    </div>
+    
+    <div class="checkout-summary">
+      <div class="summary-card">
+        <h3>注文内容</h3>
+        
+        <div class="summary-items">
+          {% for item in cart.items %}
+          <div class="summary-item">
+            <div class="summary-item-image">
+              <img src="{{ item.photo.storage_url }}" alt="{{ item.photo.photo_code }}">
+            </div>
+            <div class="summary-item-info">
+              <div class="summary-item-code">{{ item.photo.photo_code }}</div>
+              <div class="summary-item-product">{{ item.product.name }}</div>
+            </div>
+            <div class="summary-item-price">¥{{ "{:,}".format(item.price) }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <hr>
+        
+        <div class="summary-row">
+          <span>小計（{{ cart.item_count }}枚）</span>
+          <span>¥{{ "{:,}".format(cart.total_amount) }}</span>
+        </div>
+        
+        <div class="summary-row total">
+          <span>合計（税込）</span>
+          <span>¥{{ "{:,}".format(cart.total_amount) }}</span>
+        </div>
+      </div>
+      
+      <a href="{{ url_for('gallery_cart', event_code=event.event_code) }}" class="back-link">
+        ← カートに戻る
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .checkout-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .checkout-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+  }
+  
+  @media (max-width: 900px) {
+    .checkout-layout {
+      grid-template-columns: 1fr;
+    }
+    
+    .checkout-summary {
+      order: -1;
+    }
+  }
+  
+  .card-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .form-hint {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 0.5rem;
+  }
+  
+  .text-danger { color: var(--danger); }
+  
+  .payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .payment-option {
+    display: block;
+    cursor: pointer;
+  }
+  
+  .payment-option input {
+    display: none;
+  }
+  
+  .payment-option-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-800);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  
+  .payment-option input:checked + .payment-option-content {
+    border-color: var(--primary);
+    background: rgba(0, 102, 255, 0.1);
+  }
+  
+  .payment-icon {
+    font-size: 1.5rem;
+  }
+  
+  .payment-name {
+    font-weight: 600;
+  }
+  
+  .payment-desc {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-left: auto;
+  }
+  
+  .summary-card {
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  
+  .summary-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  .summary-items {
+    max-height: 240px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+  }
+  
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .summary-item:last-child {
+    border-bottom: none;
+  }
+  
+  .summary-item-image {
+    width: 48px;
+    height: 36px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  
+  .summary-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .summary-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .summary-item-code {
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .summary-item-product {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+  }
+  
+  .summary-item-price {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  
+  .summary-card hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1rem 0;
+  }
+  
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.375rem 0;
+    font-size: 0.9rem;
+  }
+  
+  .summary-row.total {
+    font-size: 1.125rem;
+    font-weight: 700;
+    padding-top: 0.75rem;
+  }
+  
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    font-size: 0.875rem;
+  }
+  
+  .back-link:hover {
+    color: var(--light);
+  }
+</style>
+{% endblock %}
+

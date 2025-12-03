@@ -1,0 +1,132 @@
+{% extends "photographer_base.html" %}
+{% block title %}売上確認 - LifeShot{% endblock %}
+{% block page_title %}売上確認{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">累計売上（あなたの取り分）</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_sales) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">累計注文数</div>
+    <div class="stat-value">{{ orders|length }}件</div>
+  </div>
+</div>
+
+{% if chart_labels %}
+<div class="card mb-3">
+  <div class="card-header">
+    <h3 class="card-title">📈 売上推移（過去30日）</h3>
+  </div>
+  <div class="card-body">
+    <canvas id="salesChart" height="100"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">💰 注文一覧</h3>
+  </div>
+  {% if orders %}
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>日時</th>
+          <th>イベント</th>
+          <th>購入者</th>
+          <th>枚数</th>
+          <th class="text-right">合計</th>
+          <th class="text-right">あなたの取り分</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td class="text-muted">{{ order.created_at.strftime('%Y/%m/%d %H:%M') }}</td>
+          <td>{{ order.event.title if order.event else '-' }}</td>
+          <td>{{ order.buyer_name }}</td>
+          <td>{{ order.items|length }}枚</td>
+          <td class="text-right text-muted">¥{{ "{:,}".format(order.total_amount) }}</td>
+          <td class="text-right"><strong>¥{{ "{:,}".format(order.photographer_amount) }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body">
+    <div class="empty-state">
+      <div class="empty-state-icon">💰</div>
+      <h4 class="empty-state-title">まだ売上がありません</h4>
+      <p class="empty-state-desc">写真が売れると、ここに表示されます</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if chart_labels %}
+<div id="salesChartData" 
+     data-labels='{{ chart_labels|tojson }}' 
+     data-values='{{ chart_values|tojson }}'
+     style="display:none;"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+  var chartDataEl = document.getElementById('salesChartData');
+  var chartLabels = JSON.parse(chartDataEl.getAttribute('data-labels') || '[]');
+  var chartValues = JSON.parse(chartDataEl.getAttribute('data-values') || '[]');
+  
+  var ctx = document.getElementById('salesChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: '売上',
+        data: chartValues,
+        backgroundColor: 'rgba(0, 102, 255, 0.5)',
+        borderColor: 'rgba(0, 102, 255, 1)',
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)'
+          },
+          ticks: {
+            color: '#64748b',
+            callback: function(value) {
+              return '¥' + value.toLocaleString();
+            }
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: '#64748b'
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,130 @@
+{% extends "admin_base.html" %}
+{% block title %}運営ダッシュボード - LifeShot{% endblock %}
+{% block page_title %}運営ダッシュボード{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">今月のGMV（流通総額）</div>
+    <div class="stat-value">¥{{ "{:,}".format(monthly_gmv) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">今月のプラットフォーム手数料</div>
+    <div class="stat-value">¥{{ "{:,}".format(monthly_platform_fee) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">累計GMV</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_gmv) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">累計プラットフォーム手数料</div>
+    <div class="stat-value">¥{{ "{:,}".format(total_platform_fee) }}</div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">登録カメラマン数</div>
+    <div class="stat-value">{{ total_photographers }}名</div>
+    <div class="text-muted" style="margin-top: 0.5rem; font-size: 0.8rem;">
+      アクティブ: {{ active_photographers }}名
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">イベント数</div>
+    <div class="stat-value">{{ total_events }}件</div>
+    <div class="text-muted" style="margin-top: 0.5rem; font-size: 0.8rem;">
+      公開中: {{ published_events }}件
+    </div>
+  </div>
+</div>
+
+{% if chart_labels %}
+<div class="card mb-3">
+  <div class="card-header">
+    <h3 class="card-title">📈 日別GMV推移（過去30日）</h3>
+  </div>
+  <div class="card-body">
+    <canvas id="gmvChart" height="100"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">💰 最近の注文</h3>
+    <a href="{{ url_for('admin_sales') }}" class="btn btn-outline btn-sm">すべて見る</a>
+  </div>
+  {% if recent_orders %}
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>日時</th>
+          <th>イベント</th>
+          <th>購入者</th>
+          <th class="text-right">GMV</th>
+          <th class="text-right">手数料</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td class="text-muted">{{ order.created_at.strftime('%Y/%m/%d %H:%M') }}</td>
+          <td>{{ order.event.title if order.event else '-' }}</td>
+          <td>{{ order.buyer_name }}</td>
+          <td class="text-right">¥{{ "{:,}".format(order.total_amount) }}</td>
+          <td class="text-right">¥{{ "{:,}".format(order.platform_fee) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body">
+    <p class="text-muted text-center">まだ注文がありません</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if chart_labels %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('gmvChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels|tojson }},
+    datasets: [{
+      label: 'GMV',
+      data: {{ chart_values|tojson }},
+      backgroundColor: 'rgba(139, 92, 246, 0.5)',
+      borderColor: 'rgba(139, 92, 246, 1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: {
+          color: '#64748b',
+          callback: function(value) { return '¥' + value.toLocaleString(); }
+        }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: '#64748b' }
+      }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}
+

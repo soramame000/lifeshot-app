@@ -1,0 +1,65 @@
+{% extends "photographer_base.html" %}
+{% block title %}{% if event %}イベント編集{% else %}新規イベント{% endif %} - LifeShot{% endblock %}
+{% block page_title %}{% if event %}イベント編集{% else %}新規イベント作成{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+  <div class="card-body">
+    <form method="POST" action="{% if event %}{{ url_for('photographer_event_edit', event_id=event.id) }}{% else %}{{ url_for('photographer_event_new') }}{% endif %}">
+      <div class="form-group">
+        <label class="form-label">イベント名 <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-input" value="{{ event.title if event else '' }}" placeholder="例: 2025年春季大会" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">開催日</label>
+        <input type="date" name="event_date" class="form-input" value="{{ event.event_date.strftime('%Y-%m-%d') if event and event.event_date else '' }}">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">ギャラリーパスワード</label>
+        <input type="text" name="password" class="form-input" value="{{ event.password if event and event.password else '' }}" placeholder="空欄の場合はパスワードなし">
+        <p class="form-hint">購入者がギャラリーにアクセスする際に必要なパスワードです。空欄にするとパスワードなしで閲覧できます。</p>
+      </div>
+      
+      {% if event %}
+      <div class="form-group">
+        <label class="form-label">ステータス</label>
+        <select name="status" class="form-input">
+          <option value="draft" {% if event.status == 'draft' %}selected{% endif %}>下書き</option>
+          <option value="published" {% if event.status == 'published' %}selected{% endif %}>公開中</option>
+          <option value="closed" {% if event.status == 'closed' %}selected{% endif %}>終了</option>
+        </select>
+        <p class="form-hint">「公開中」にすると購入者がギャラリーにアクセスできるようになります</p>
+      </div>
+      {% endif %}
+      
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea name="note" class="form-input" placeholder="内部メモ（購入者には表示されません）">{{ event.note if event and event.note else '' }}</textarea>
+      </div>
+      
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {% if event %}更新する{% else %}作成する{% endif %}
+        </button>
+        <a href="{% if event %}{{ url_for('photographer_event_detail', event_id=event.id) }}{% else %}{{ url_for('photographer_events') }}{% endif %}" class="btn btn-outline">キャンセル</a>
+      </div>
+    </form>
+    
+    {% if event and not event.orders %}
+    <hr style="border-color: var(--border); margin: 2rem 0;">
+    <div class="danger-zone">
+      <h4 style="color: var(--danger); margin-bottom: 0.5rem;">⚠️ 危険な操作</h4>
+      <p class="text-muted mb-2">このイベントを削除します。この操作は取り消せません。</p>
+      <form action="{{ url_for('photographer_event_delete', event_id=event.id) }}" method="POST">
+        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当にこのイベントを削除しますか？この操作は取り消せません。')">
+          イベントを削除
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
