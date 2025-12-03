@@ -16,15 +16,15 @@
   <div class="card-body">
     <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
     <input type="hidden" id="event-id" value="{{ event.id }}">
+    <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" id="file-input">
     
     <div class="upload-zone" id="upload-zone">
       <div class="upload-icon">📁</div>
       <h4>ファイルをドラッグ＆ドロップ</h4>
       <p class="text-muted">または</p>
-      <label class="btn btn-primary">
+      <button type="button" class="btn btn-primary" id="select-btn">
         ファイルを選択
-        <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" id="file-input">
-      </label>
+      </button>
       <p class="form-hint mt-2">JPG, PNG, GIF, WebP形式に対応。複数ファイル選択可。</p>
       <p class="form-hint">画像は自動的に最適化されます（最大2048px）</p>
     </div>
@@ -32,7 +32,10 @@
     <div id="preview-container" style="display: none;">
       <div class="preview-header">
         <span id="file-count">0枚選択中</span>
-        <button type="button" class="btn btn-outline btn-sm" onclick="clearFiles()">クリア</button>
+        <div>
+          <button type="button" class="btn btn-outline btn-sm" id="add-more-btn">追加</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="clearFiles()">クリア</button>
+        </div>
       </div>
       <div class="preview-grid" id="preview-grid"></div>
     </div>
@@ -98,6 +101,11 @@
     margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
+  }
+  
+  .preview-header > div {
+    display: flex;
+    gap: 0.5rem;
   }
   
   .preview-grid {
@@ -196,6 +204,8 @@
 <script>
 const uploadZone = document.getElementById('upload-zone');
 const fileInput = document.getElementById('file-input');
+const selectBtn = document.getElementById('select-btn');
+const addMoreBtn = document.getElementById('add-more-btn');
 const previewContainer = document.getElementById('preview-container');
 const previewGrid = document.getElementById('preview-grid');
 const fileCount = document.getElementById('file-count');
@@ -218,6 +228,17 @@ let previewElements = [];
 const MAX_SIZE = 2048;
 const JPEG_QUALITY = 0.85;
 
+// ファイル選択ボタン
+selectBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  fileInput.click();
+});
+
+// 追加ボタン
+addMoreBtn.addEventListener('click', () => {
+  fileInput.click();
+});
+
 // ドラッグ＆ドロップ
 uploadZone.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -234,24 +255,40 @@ uploadZone.addEventListener('drop', (e) => {
   handleFiles(e.dataTransfer.files);
 });
 
-uploadZone.addEventListener('click', () => {
-  fileInput.click();
+// uploadZone全体のクリック（ボタン以外）
+uploadZone.addEventListener('click', (e) => {
+  if (e.target !== selectBtn && !selectBtn.contains(e.target)) {
+    fileInput.click();
+  }
 });
 
+// ファイル選択時
 fileInput.addEventListener('change', (e) => {
-  handleFiles(e.target.files);
+  console.log('File input changed:', e.target.files.length, 'files');
+  if (e.target.files && e.target.files.length > 0) {
+    handleFiles(e.target.files);
+  }
+  // 同じファイルを再選択できるようにリセット
+  fileInput.value = '';
 });
 
 function handleFiles(files) {
+  console.log('handleFiles called with', files.length, 'files');
+  let addedCount = 0;
   for (let file of files) {
     if (file.type.startsWith('image/')) {
       selectedFiles.push(file);
+      addedCount++;
     }
   }
-  updatePreview();
+  console.log('Added', addedCount, 'files. Total:', selectedFiles.length);
+  if (addedCount > 0) {
+    updatePreview();
+  }
 }
 
 async function updatePreview() {
+  console.log('updatePreview called. Files:', selectedFiles.length);
   previewGrid.innerHTML = '';
   previewElements = [];
   
@@ -268,8 +305,13 @@ async function updatePreview() {
       div.id = `preview-${i}`;
       
       // サムネイル生成（軽量化のため小さいサイズで）
-      const thumb = await createThumbnail(file, 100);
-      div.innerHTML = `<img src="${thumb}" alt="${file.name}">`;
+      try {
+        const thumb = await createThumbnail(file, 100);
+        div.innerHTML = `<img src="${thumb}" alt="${file.name}">`;
+      } catch (err) {
+        console.error('Thumbnail error:', err);
+        div.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--gray-500);">📷</div>`;
+      }
       previewGrid.appendChild(div);
       previewElements.push(div);
     }
@@ -283,16 +325,17 @@ async function updatePreview() {
 function clearFiles() {
   selectedFiles = [];
   previewElements = [];
-  fileInput.value = '';
   updatePreview();
 }
 
 // サムネイル生成
 function createThumbnail(file, maxSize) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    reader.onerror = reject;
     reader.onload = (e) => {
       const img = new Image();
+      img.onerror = reject;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
@@ -323,10 +366,12 @@ function createThumbnail(file, maxSize) {
 
 // 画像圧縮
 function compressImage(file) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    reader.onerror = reject;
     reader.onload = (e) => {
       const img = new Image();
+      img.onerror = reject;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
@@ -348,7 +393,11 @@ function compressImage(file) {
         ctx.drawImage(img, 0, 0, width, height);
         
         canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          if (blob) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          } else {
+            reject(new Error('Failed to create blob'));
+          }
         }, 'image/jpeg', JPEG_QUALITY);
       };
       img.src = e.target.result;
@@ -393,7 +442,10 @@ async function startUpload() {
       
       const response = await fetch(`/events/${eventId}/photos/upload`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
       });
       
       if (response.ok) {
@@ -403,7 +455,7 @@ async function startUpload() {
           previewEl.classList.add('done');
         }
       } else {
-        throw new Error('Upload failed');
+        throw new Error('Upload failed: ' + response.status);
       }
     } catch (error) {
       errorCount++;
@@ -433,5 +485,7 @@ async function startUpload() {
     completeText.textContent = `成功: ${successCount}枚 / 失敗: ${errorCount}枚`;
   }
 }
+
+console.log('Upload script loaded');
 </script>
 {% endblock %}
