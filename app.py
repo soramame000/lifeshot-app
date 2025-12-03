@@ -682,8 +682,15 @@ def photographer_required(view_func):
     """カメラマンログインが必要なルート用デコレータ"""
     @wraps(view_func)
     def wrapper(*args, **kwargs):
-        if not session.get("photographer_id"):
+        photographer_id = session.get("photographer_id")
+        if not photographer_id:
             flash("ログインが必要です", "warning")
+            return redirect(url_for("photographer_login"))
+        # DBにphotographerが存在するか確認
+        photographer = db.session.get(Photographer, photographer_id)
+        if not photographer:
+            session.pop("photographer_id", None)
+            flash("セッションが無効です。再度ログインしてください", "warning")
             return redirect(url_for("photographer_login"))
         return view_func(*args, **kwargs)
     return wrapper
